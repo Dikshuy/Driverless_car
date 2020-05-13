@@ -1,5 +1,4 @@
 import numpy as np
-import sympy as sym
 
 
 def curvature_fn(x, y):
@@ -13,4 +12,3 @@ def curvature_fn(x, y):
         k[j, 0] = (dx[j, 0] * ddy[j, 0] - dy[j, 0] * ddx[j, 0]) / (dx[j, 0] * dx[j, 0] + dy[j, 0] * dy[j, 0])
 
     return k
-
