@@ -37,12 +37,12 @@ def overtake_1(a_store, b_store, x_store, y_store, T_i, k, m_tang, m_perp, index
         iterate = 0
         while iterate == 0 and tr == k:
             if m_tang == 0:
-                p = [[a_store[6, tr]],
-                     [a_store[5, tr]]
+                p = [[a_store[5, tr]]
                      [a_store[4, tr]]
                      [a_store[3, tr]]
                      [a_store[2, tr]]
-                     [a_store[1, tr] - xq[index + 1]]]
+                     [a_store[1, tr]]
+                     [a_store[0, tr] - xq[index + 1]]]
                 time = np.roots(p)
                 for j in range(0, len(time)):
                     if ~any(np.imag(time[j])) == 1:
@@ -50,12 +50,12 @@ def overtake_1(a_store, b_store, x_store, y_store, T_i, k, m_tang, m_perp, index
                             T_fin = time[j]
 
             else:
-                p = [[b_store[6, tr] - m_perp * a_store[6, tr]],
-                     [b_store[5, tr] - m_perp * a_store(5, tr)]
-                     [b_store[4, tr] - m_perp * a_store(4, tr)]
-                     [b_store[3, tr] - m_perp * a_store(3, tr)]
-                     [b_store[2, tr] - m_perp * a_store(2, tr)]
-                     [b_store[1, tr] - m_perp * a_store(1, tr) + m_perp * xq[index + 1] - yq[index + 1]]]
+                p = [[b_store[5, tr] - m_perp * a_store[6, tr]],
+                     [b_store[4, tr] - m_perp * a_store(5, tr)]
+                     [b_store[3, tr] - m_perp * a_store(4, tr)]
+                     [b_store[2, tr] - m_perp * a_store(3, tr)]
+                     [b_store[1, tr] - m_perp * a_store(2, tr)]
+                     [b_store[0, tr] - m_perp * a_store(1, tr) + m_perp * xq[index + 1] - yq[index + 1]]]
                 time = np.roots(p)
                 for j in range(0, len(time)):
                     if ~any(np.imag(time[j])) == 1:

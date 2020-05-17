@@ -25,49 +25,49 @@ dyn1_x = 0
 dyn1_y = 0
 
 
-def vel_prof(x, y, v0, a0, t0, state):
+def vel_prof(x, y, v0, a0, t0, current_state):
     global v_obs, V_max, critical_dis, follow_dis, dyn_x, dyn_y, dyn1_x, dyn1_y
     length_of_array_x = len(x)
 
-    vel = np.zeros(length_of_array_x, 1)
-    a_long = np.zeros(length_of_array_x, 1)
-    w = np.zeros(length_of_array_x, 1)
-    t = np.zeros(length_of_array_x, 1)
+    vel_matrix = np.zeros(length_of_array_x, 1)
+    longitudinal_acceleration = np.zeros(length_of_array_x, 1)
+    wt = np.zeros(length_of_array_x, 1)
+    current_time = np.zeros(length_of_array_x, 1)
     c = curvature_fn(x, y)
     a_lat_max = 0.2
     a_long_max = 0.5
-    vel[0] = v0
-    t[0] = t0
-    a_long[0] = a0
+    vel_matrix[0] = v0
+    current_time[0] = t0
+    longitudinal_acceleration[0] = a0
 
-    def zero():
-        v_max = V_max
-        acc_long = a_long_max
-        return v_max, acc_long
+    def zero():  # clear road ahead
+        max_v = V_max
+        long_acc = a_long_max
+        return max_v, long_acc
 
-    def one():
-        v_max = min(v_obs, V_max)
-        acc = 0.5 * (v_max ** 2 - v0 ** 2) / (math.sqrt((x[0] - dyn_x) ** 2 + (y[0] - dyn_y) ** 2) - follow_dis)
-        acc_long = min(acc, a_long_max)
-        return v_max, acc_long
+    def one():  # follow the vehicle ahead in same lane
+        max_v = min(v_obs, V_max)
+        acc = 0.5 * (max_v ** 2 - v0 ** 2) / (math.sqrt((x[0] - dyn_x) ** 2 + (y[0] - dyn_y) ** 2) - follow_dis)
+        long_acc = min(acc, a_long_max)
+        return max_v, long_acc
 
-    def two():
-        v_max = V_max
-        acc_long = a_long_max
-        return v_max, acc_long
+    def two():  # overtake the vehicle ahead
+        max_v = V_max
+        long_acc = a_long_max
+        return max_v, long_acc
 
-    def three():
-        dis = math.sqrt((x[0] - dyn1_x) ** 2 + (y[0] - dyn1_y) ** 2) - critical_dis
-        v_max = 0.0
-        acc_long = max(-v0 ** 2 / (2 * abs(dis)), -V_max)
-        return v_max, acc_long
+    def three():  # emergency braking
+        dis = math.sqrt((x[0] - dyn1_x) ** 2 + ((y[0] - dyn1_y) ** 2) - critical_dis)
+        max_v = 0.0
+        long_acc = max(-v0 ** 2 / (2 * abs(dis)), -V_max)
+        return max_v, long_acc
 
-    def five():
-        v_max = V_max
-        acc_long = a_long_max
-        return v_max, acc_long
+    def five():  # horizon exceeded
+        max_v = V_max
+        long_acc = a_long_max
+        return max_v, long_acc
 
-    def number(argument):
+    def number(argument):  # defining switch function
         switcher = {
             0: zero,
             1: one,
@@ -75,59 +75,61 @@ def vel_prof(x, y, v0, a0, t0, state):
             3: three,
             5: five
         }
-        func = switcher.get(argument, "Invalid month")
+        func = switcher.get(argument, "Invalid state")
         return func()
 
-    v_max, acc_long = number(state)
+    v_max, acc_long = number(current_state)
 
-    for i in range(0, length_of_array_x):
-        if c[i] != 0:
-            v_all = min(v_max, math.sqrt(a_lat_max / abs(c[i])))
-            temp = math.sqrt((vel[i - 1] * vel[i - 1]) + 2 * acc_long * math.sqrt(
-                (x[i - 1] - x[i])(x[i - 1] - x[i]) + (y[i - 1] - y[i]) * (y[i - 1] - y[i])))
-            vel[i] = max(min(temp, v_all), 0)
+    for b in range(0, length_of_array_x):
+        if c[b] != 0:  # turning is required
+            v_all = min(v_max, math.sqrt(a_lat_max / abs(c[b])))
+            temp = math.sqrt(
+                (vel_matrix[b - 1] ** 2) + 2 * acc_long * math.sqrt((x[b - 1] - x[b]) ** 2 + (y[b - 1] - y[b]) ** 2))
+            vel_matrix[b] = max(min(temp, v_all), 0)  # ensure non-negative value of velocity
 
-            temp1 = ((vel[i] * vel[i]) - (vel[i - 1] * vel[i - 1])) / (
-                    2 * math.sqrt((x[i - 1] - x[i])(x[i - 1] - x[i]) + (y[i - 1] - y[i]) * (y[i - 1] - y[i])))
-            a_long[i] = min(temp1, acc_long)
+            temp1 = ((vel_matrix[b] ** 2) - (vel_matrix[b - 1] ** 2)) / (
+                        2 * math.sqrt((x[b - 1] - x[b]) ** 2 + (y[b - 1] - y[b]) ** 2))
+            longitudinal_acceleration[b] = min(temp1, acc_long)
 
-            w[0] = v0 * c[i]
-            w[i] = vel[i] * c[i]
+            wt[0] = v0 * c[b]
+            wt[b] = vel_matrix[b] * c[b]
 
-            if vel[i] == vel[i - 1] and vel[i] == 0:
-                t[i] = t[i - 1] + 1
+            if vel_matrix[b] == vel_matrix[b - 1] and vel_matrix[b] == 0:
+                current_time[b] = current_time[b - 1] + 1
 
-            elif vel[i] == vel[i - 1] and vel[i] != 0:
-                t[i] = t[i - 1] + (math.sqrt((x[i - 1] - x[i])(x[i - 1] - x[i]) + (y[i - 1] - y[i])(y[i - 1] - y[i]))) / \
-                       vel[i - 1]
+            elif vel_matrix[b] == vel_matrix[b - 1] and vel_matrix[b] != 0:
+                current_time[b] = current_time[b - 1] + (math.sqrt((x[b - 1] - x[b]) ** 2 + (y[b - 1] - y[b]) ** 2)) / \
+                                  vel_matrix[b - 1]
 
             else:
-                t[i] = t[i - 1] + (vel[i] - vel[i - 1]) / a_long[i]
+                current_time[b] = current_time[b - 1] + (vel_matrix[b] - vel_matrix[b - 1]) / longitudinal_acceleration[
+                    b]
 
         else:
-            temp = math.sqrt((vel[i - 1] * vel[i - 1]) + 2 * acc_long * math.sqrt(
-                (x[i - 1] - x[i]) * (x[i - 1] - x[i]) + (y[i - 1] - y[i]) * (y[i - 1] - y[i])))
-            vel[i] = max(min(temp, v_max), 0)
+            temp = math.sqrt(
+                (vel_matrix[b - 1] ** 2) + 2 * acc_long * math.sqrt((x[b - 1] - x[b]) ** 2 + (y[b - 1] - y[b]) ** 2))
+            vel_matrix[b] = max(min(temp, v_max), 0)
 
-            temp1 = (vel[i] * vel[i] - vel[i - 1] * vel[i - 1]) / (
-                    2 * math.sqrt((x[i - 1] - x[i]) * (x[i - 1] - x[i]) + (y[i - 1] - y[i]) * (y[i - 1] - y[i])))
-            a_long[i] = min(temp1, acc_long)
+            temp1 = ((vel_matrix[b] ** 2) - (vel_matrix[b - 1] ** 2)) / (
+                        2 * math.sqrt((x[b - 1] - x[b]) ** 2 + (y[b - 1] - y[b]) ** 2))
+            longitudinal_acceleration[b] = min(temp1, acc_long)
 
-            w[0] = 0
-            w[i] = 0
+            wt[0] = 0
+            wt[b] = 0
 
-            if vel[i] == vel[i - 1] and vel[i] == 0:
-                t[i] = t[i - 1] + 1
+            if vel_matrix[b] == vel_matrix[b - 1] and vel_matrix[b] == 0:
+                current_time[b] = current_time[b - 1] + 1
 
-            elif vel[i] == vel[i - 1] and vel[i] != 0:
-                t[i] = t[i - 1] + (math.sqrt((x[i - 1] - x[i])(x[i - 1] - x[i]) + (y[i - 1] - y[i])(y[i - 1] - y[i]))) / \
-                       vel[i - 1]
+            elif vel_matrix[b] == vel_matrix[b - 1] and vel_matrix[b] != 0:
+                current_time[b] = current_time[b - 1] + (math.sqrt((x[b - 1] - x[b]) ** 2 + (y[b - 1] - y[b]) ** 2)) / \
+                                  vel_matrix[b - 1]
 
             else:
-                t[i] = t[i - 1] + (vel[i] - vel[i - 1]) / a_long[i]
+                current_time[b] = current_time[b - 1] + (vel_matrix[b] - vel_matrix[b - 1]) / longitudinal_acceleration[
+                    b]
 
-    vel[0] = v0
-    a_long[0] = a0
-    t[0] = t0
+    vel_matrix[0] = v0
+    longitudinal_acceleration[0] = a0
+    current_time[0] = t0
 
-    return x, y, vel, a_long, w, t
+    return x, y, vel_matrix, longitudinal_acceleration, wt, current_time
