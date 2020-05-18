@@ -89,6 +89,7 @@
 #
 #     i = i - 1
 import numpy as np
+
 # num_foc_t = 5
 # xd = []
 #
@@ -111,7 +112,7 @@ import numpy as np
 # print(a)
 # print(np.where(a > 5))
 
-matrix = np.zeros((5,4))
+matrix = np.zeros((5, 4))
 # print(matrix)
 # print(len(matrix))
 a = np.zeros((len(matrix), 1))
@@ -121,12 +122,19 @@ print(a[-1])
 d = 4 + 10 / 5
 print(d ** 2)
 
-b = [[2],
+b = [[1],
      [2],
-     [3],
+     [0],
      [4]]
 print(b)
 c = max(b)
 print(c)
 
+minElement = np.amin(b)
+print(minElement)
 
+print(np.argmin(b))
+print(np.subtract(b, -2))
+
+a = np.array([[2, 3, 2]]).T
+print(len(a))

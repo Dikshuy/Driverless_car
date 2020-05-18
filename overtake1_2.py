@@ -27,15 +27,15 @@ def curvature_fn(x, y):
     return k
 
 
-def overtake_1(a_store, b_store, x_store, y_store, T_i, k, m_tang, m_perp, index):
+def overtake_1_2(a_store, b_store, x_store, y_store, T_i, m_tang, m_perp, index):
     global T_fin, theta4_n, ad_n, vd_n, wd_n
-    trajectory = 5
+    trajectory = 1
     num_foc_t = 10
     td_n = T_i
 
     for tr in range(0, trajectory):
         iterate = 0
-        while iterate == 0 and tr == k:
+        while iterate == 0:
             if m_tang == 0:
                 p = [[a_store[5, tr]]
                      [a_store[4, tr]]

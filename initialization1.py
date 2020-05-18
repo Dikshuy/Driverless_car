@@ -24,7 +24,7 @@ def initialization1(velocity, acceleration_in_x, w, time, p, indexes, angle):
         theta2 = math.atan(m_tang2)
 
     P = [[1, t_i, t_i ** 2, t_i ** 3, t_i ** 4, t_i ** 5],
-         [0, 1, 2 * t_f, 3 * (t_f ** 2), 4 * (t_f ** 3), 5 * (t_f ** 4)],
+         [0, 1, 2 * t_i, 3 * (t_i ** 2), 4 * (t_i ** 3), 5 * (t_i ** 4)],
          [0, 0, 2, 6 * t_i, 12 * (t_i ** 2), 20 * (t_i ** 3)],
          [1, t_f, t_f ** 2, t_f ** 3, t_f ** 4, t_f ** 5],
          [0, 1, 2 * t_f, 3 * (t_f ** 2), 4 * (t_f ** 3), 5 * (t_f ** 4)],
