@@ -56,7 +56,7 @@ def environment_load():
 
     x = lane[0, c_row - 1, second_cols - 1]
     y = lane[1, c_row - 1, second_cols - 1]
-    for we in range(second_cols + 1, straight_cols2):
+    for we in range(second_cols, straight_cols2):
         lane[0, c_row - 1, we] = x + dx
         lane[1, c_row - 1, we] = y
         lane[2, c_row - 1, we] = math.pi
@@ -67,7 +67,7 @@ def environment_load():
     th = math.pi / 2 + dth
     x = lane[0, c_row - 1, straight_cols2 - 1]
     y = lane[1, c_row - 1, straight_cols2 - 1]
-    for we in range(straight_cols2 + 1, third_cols):
+    for we in range(straight_cols2, third_cols):
         lane[0, c_row - 1, we] = x - r0 * math.cos(th)
         lane[1, c_row - 1, we] = y - r0 * (1 - math.sin(th))
         lane[2, c_row - 1, we] = th
@@ -76,7 +76,7 @@ def environment_load():
 
     x = lane[0, c_row - 1, third_cols - 1]
     y = lane[1, c_row - 1, third_cols - 1]
-    for we in range(third_cols + 1, cols):
+    for we in range(third_cols, cols):
         lane[0, c_row - 1, we] = x - dx
         lane[1, c_row - 1, we] = y
         lane[2, c_row - 1, we] = 0
