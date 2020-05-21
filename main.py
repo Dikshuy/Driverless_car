@@ -115,28 +115,47 @@ def environment_load():
 
 
 def curvature_fn(x, y):
-    k_matrix = np.zeros(len(x), 1)
     dx = np.gradient(x)
     ddx = np.gradient(dx)
     dy = np.gradient(y)
     ddy = np.gradient(dy)
+    A = np.multiply(dx, ddy)
+    B = np.multiply(dy, ddx)
+    C = np.subtract(A, B)
+    D = np.multiply(dx, dx)
+    E = np.multiply(dy, dy)
+    F = np.add(D, E)
+    G = np.power(F, 1.5)
+    k_matrix = np.divide(C, G)
+    return k_matrix
 
-    for kl in range(0, len(x)):
-        k_matrix[kl, 0] = (dx[kl, 0] * ddy[kl, 0] - dy[kl, 0] * ddx[kl, 0]) / (
-                dx[kl, 0] * dx[kl, 0] + dy[kl, 0] * dy[kl, 0])
 
+def menger_curv(x, y):
+    k_matrix = np.zeros((len(x), 1))
+    for qq in range(1, len(x) - 1):
+        area1 = x[qq - 1] * (y[qq] - y[qq + 1])
+        area2 = x[qq] * (y[qq + 1] - y[qq - 1])
+        area3 = x[qq + 1] * (y[qq - 1] - y[qq])
+        area = 0.5 * (area1 + area2 + area3)
+        s1 = math.sqrt((x[qq - 1] - x[qq]) ** 2 + (y[qq - 1] - y[qq]) ** 2)
+        s2 = math.sqrt((x[qq + 1] - x[qq]) ** 2 + (y[qq + 1] - y[qq]) ** 2)
+        s3 = math.sqrt((x[qq - 1] - x[qq + 1]) ** 2 + (y[qq - 1] - y[qq + 1]) ** 2)
+        s4 = s1 * s2 * s3
+        result = area / s4
+        k_matrix[qq] = 4 * result
+    k_matrix[0] = k_matrix[1]
+    k_matrix[len(x) - 1] = k_matrix[len(x) - 2]
     return k_matrix
 
 
 def vel_prof(x, y, v0, a0, t0, current_state):
     global v_obs, V_max, critical_dis, follow_dis, dyn_x, dyn_y, dyn1_x, dyn1_y
     length_of_array_x = len(x)
-
-    vel_matrix = np.zeros(length_of_array_x, 1)
-    longitudinal_acceleration = np.zeros(length_of_array_x, 1)
-    wt = np.zeros(length_of_array_x, 1)
-    current_time = np.zeros(length_of_array_x, 1)
-    c = curvature_fn(x, y)
+    vel_matrix = np.zeros((length_of_array_x, 1))
+    longitudinal_acceleration = np.zeros((length_of_array_x, 1))
+    wt = np.zeros((length_of_array_x, 1))
+    current_time = np.zeros((length_of_array_x, 1))
+    c = menger_curv(x, y)
     a_lat_max = 0.2
     a_long_max = 0.5
     vel_matrix[0] = v0
@@ -183,19 +202,19 @@ def vel_prof(x, y, v0, a0, t0, current_state):
 
     v_max, acc_long = number(current_state)
 
-    for o in range(0, length_of_array_x):
+    for o in range(1, length_of_array_x):
         if c[o] != 0:  # turning is required
             v_all = min(v_max, math.sqrt(a_lat_max / abs(c[o])))
             temp = math.sqrt(
-                (vel_matrix[o - 1] ** 2) + 2 * acc_long * math.sqrt((x[o - 1] - x[o]) ** 2 + (y[o - 1] - y[o]) ** 2))
+                vel_matrix[o - 1] ** 2 + 2 * acc_long * math.sqrt((x[o - 1] - x[o]) ** 2 + (y[o - 1] - y[o]) ** 2))
             vel_matrix[o] = max(min(temp, v_all), 0)  # ensure non-negative value of velocity
 
-            temp1 = ((vel_matrix[o] ** 2) - (vel_matrix[o - 1] ** 2)) / (
+            temp1 = (vel_matrix[o] ** 2 - vel_matrix[o - 1] ** 2) / (
                     2 * math.sqrt((x[o - 1] - x[o]) ** 2 + (y[o - 1] - y[o]) ** 2))
             longitudinal_acceleration[o] = min(temp1, acc_long)
 
-            wt[0] = v0 * c[o]
-            wt[o] = vel_matrix[o] * c[o]
+            wt[0] = np.dot(v0, c[o])
+            wt[o] = np.dot(vel_matrix[o], c[o])
 
             if vel_matrix[o] == vel_matrix[o - 1] and vel_matrix[o] == 0:
                 current_time[o] = current_time[o - 1] + 1
@@ -238,141 +257,141 @@ def vel_prof(x, y, v0, a0, t0, current_state):
     return x, y, vel_matrix, longitudinal_acceleration, wt, current_time
 
 
-def overtake_1(a_store, b_store, x_store, y_store, T_i, k, m_tang, m_perp, index):
+def overtake_1(a_store, b_store, store_x, store_y, T_initial, kk, tang_m, perpendicular_m, index_number):
     global T_fin, theta4_n, ad_n, vd_n, wd_n
-    trajectory = 5
-    num_foc_t = 10
-    td_n = T_i
+    trajectory1 = 5
+    num_t = 10
+    td_n = T_initial
 
-    for tr in range(0, trajectory):
+    for tr in range(0, trajectory1):
         iterate = 0
-        while iterate == 0 and tr == k:
-            if m_tang == 0:
-                p = [[a_store[5, tr]]
-                     [a_store[4, tr]]
-                     [a_store[3, tr]]
-                     [a_store[2, tr]]
-                     [a_store[1, tr]]
-                     [a_store[0, tr] - xq[index + 1]]]
+        while iterate == 0 and tr == kk:
+            if tang_m == 0:
+                p = [[a_store[5, tr]],
+                     [a_store[4, tr]],
+                     [a_store[3, tr]],
+                     [a_store[2, tr]],
+                     [a_store[1, tr]],
+                     [a_store[0, tr] - xq[index_number + 1]]]
                 time = np.roots(p)
-                for j in range(0, len(time)):
-                    if ~any(np.imag(time[j])) == 1:
-                        if time[j] > 0:
-                            T_fin = time[j]
+                for mm in range(0, len(time)):
+                    if ~any(np.imag(time[mm])) == 1:
+                        if time[mm] > 0:
+                            T_fin = time[mm]
 
             else:
-                p = [[b_store[5, tr] - m_perp * a_store[6, tr]],
-                     [b_store[4, tr] - m_perp * a_store(5, tr)]
-                     [b_store[3, tr] - m_perp * a_store(4, tr)]
-                     [b_store[2, tr] - m_perp * a_store(3, tr)]
-                     [b_store[1, tr] - m_perp * a_store(2, tr)]
-                     [b_store[0, tr] - m_perp * a_store(1, tr) + m_perp * xq[index + 1] - yq[index + 1]]]
+                p = [[b_store[5, tr] - perpendicular_m * a_store[5, tr]],
+                     [b_store[4, tr] - perpendicular_m * a_store[4, tr]],
+                     [b_store[3, tr] - perpendicular_m * a_store[3, tr]],
+                     [b_store[2, tr] - perpendicular_m * a_store[2, tr]],
+                     [b_store[1, tr] - perpendicular_m * a_store[1, tr]],
+                     [b_store[0, tr] - perpendicular_m * a_store[0, tr] + perpendicular_m * xq[index_number + 1] - yq[
+                         index_number + 1]]]
                 time = np.roots(p)
-                for j in range(0, len(time)):
-                    if ~any(np.imag(time[j])) == 1:
-                        if time[j] > 0:
-                            T_fin = time[j]
+                for mm in range(0, len(time)):
+                    if ~any(np.imag(time[mm])) == 1:
+                        if time[mm] > 0:
+                            T_fin = time[mm]
 
-            for ii in range(0, num_foc_t):
-                xd_n[ii, 0] = [1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5] * a_store[:, tr]
-                yd_n[ii, 0] = [1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5] * b_store[:, tr]
-
-                td_n = td_n + (T_fin - T_i) / num_foc_t
+            for ii in range(0, num_t + 1):
+                xd_n[ii] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], a_store[:, tr])
+                yd_n[ii] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], b_store[:, tr])
+                td_n = td_n + (T_fin - T_initial) / num_t
 
             curv = curvature_fn(xd_n, yd_n)
             A = np.array([0, 1, 2 * T_fin, 3 * T_fin ** 2, 4 * T_fin ** 3, 5 * T_fin ** 4])
             B = np.dot(A, a_store)
             C = np.dot(A, b_store)
             vd_n = max(min(math.sqrt(B * B + C * C), V_max), 0)
-            wd_n = vd_n * curv[num_foc_t + 1][0]
+            wd_n = vd_n * curv[num_t + 1][0]
             D = np.array([0, 0, 2, 6 * T_fin, 12 * T_fin ^ 2, 20 * T_fin ^ 3])
             E = np.dot(D, a_store)
             F = np.dot(E, b_store)
             ad_n = min(math.sqrt(F * F + E * E), 1.2)
 
-            for jj in range(0, num_foc_t):
-                if xq[index + 1] - xq[index] < 0:
-                    theta4[jj, 0] = math.pi + math.atan((yd_n[jj + 1] - yd_n[jj]) / xd_n[jj + 1] - xd_n[jj])
+            for mm in range(0, num_t):
+                if xq[index_number + 1] - xq[index_number] < 0:
+                    theta4[mm, 0] = math.pi + math.atan((yd_n[mm + 1] - yd_n[mm]) / xd_n[mm + 1] - xd_n[mm])
                 else:
-                    theta4[jj, 0] = math.atan((yd_n[jj + 1] - yd_n[jj]) / xd_n[jj + 1] - xd_n[jj])
+                    theta4[mm, 0] = math.atan((yd_n[mm + 1] - yd_n[mm]) / xd_n[mm + 1] - xd_n[mm])
 
-            theta4_n = theta4[num_foc_t, 0]
+            theta4_n = theta4[num_t, 0]
 
-            x_store[:, tr] = xd_n
-            y_store[:, tr] = yd_n
+            store_x[:, tr] = xd_n
+            store_y[:, tr] = yd_n
             iterate = iterate + 1
 
-    return x_store, y_store, vd_n, ad_n, wd_n, theta4_n, T_fin
+    return store_x, store_y, vd_n, ad_n, wd_n, theta4_n, T_fin
 
 
-def overtake_1_2(a_store, b_store, x_store, y_store, T_i, m_tang, m_perp, index):
+def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendicular_m, index_no):
     global T_fin, theta4_n, ad_n, vd_n, wd_n
-    trajectory = 1
-    num_foc_t = 10
-    td_n = T_i
+    trajectory2 = 1
+    num_t = 10
+    td_n = T_initial
 
-    for tr in range(0, trajectory):
+    for tr in range(0, trajectory2):
         iterate = 0
         while iterate == 0:
-            if m_tang == 0:
+            if tang_m == 0:
                 p = [[a_store[5, tr]]
                      [a_store[4, tr]]
                      [a_store[3, tr]]
                      [a_store[2, tr]]
                      [a_store[1, tr]]
-                     [a_store[0, tr] - xq[index + 1]]]
+                     [a_store[0, tr] - xq[index_no + 1]]]
                 time = np.roots(p)
-                for j in range(0, len(time)):
-                    if ~any(np.imag(time[j])) == 1:
-                        if time[j] > 0:
-                            T_fin = time[j]
+                for nn in range(0, len(time)):
+                    if ~any(np.imag(time[nn])) == 1:
+                        if time[nn] > 0:
+                            T_fin = time[nn]
 
             else:
-                p = [[b_store[5, tr] - m_perp * a_store[6, tr]],
-                     [b_store[4, tr] - m_perp * a_store(5, tr)]
-                     [b_store[3, tr] - m_perp * a_store(4, tr)]
-                     [b_store[2, tr] - m_perp * a_store(3, tr)]
-                     [b_store[1, tr] - m_perp * a_store(2, tr)]
-                     [b_store[0, tr] - m_perp * a_store(1, tr) + m_perp * xq[index + 1] - yq[index + 1]]]
+                p = [[b_store[5, tr] - perpendicular_m * a_store[5, tr]],
+                     [b_store[4, tr] - perpendicular_m * a_store[4, tr]],
+                     [b_store[3, tr] - perpendicular_m * a_store[3, tr]],
+                     [b_store[2, tr] - perpendicular_m * a_store[2, tr]],
+                     [b_store[1, tr] - perpendicular_m * a_store[1, tr]],
+                     [b_store[0, tr] - perpendicular_m * a_store[0, tr] + perpendicular_m * xq[index_no + 1] - yq[
+                         index_no + 1]]]
                 time = np.roots(p)
-                for j in range(0, len(time)):
-                    if ~any(np.imag(time[j])) == 1:
-                        if time[j] > 0:
-                            T_fin = time[j]
+                for nn in range(0, len(time)):
+                    if ~any(np.imag(time[nn])) == 1:
+                        if time[nn] > 0:
+                            T_fin = time[nn]
 
-            for ii in range(0, num_foc_t):
-                xd_n[ii][0] = [1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5] * a_store[:, tr]
-                yd_n[ii][0] = [1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5] * b_store[:, tr]
-
-                td_n = td_n + (T_fin - T_i) / num_foc_t
+            for ii in range(0, num_t + 1):
+                xd_n[ii, 0] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], a_store[:, tr])
+                yd_n[ii, 0] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], b_store[:, tr])
+                td_n = td_n + (T_fin - T_initial) / num_t
 
             curv = curvature_fn(xd_n, yd_n)
             A = np.array([0, 1, 2 * T_fin, 3 * T_fin ** 2, 4 * T_fin ** 3, 5 * T_fin ** 4])
             B = np.dot(A, a_store)
             C = np.dot(A, b_store)
             vd_n = max(min(math.sqrt(B * B + C * C), V_max), 0)
-            wd_n = vd_n * curv[num_foc_t + 1][0]
+            wd_n = vd_n * curv[num_t + 1][0]
             D = np.array([0, 0, 2, 6 * T_fin, 12 * T_fin ^ 2, 20 * T_fin ^ 3])
             E = np.dot(D, a_store)
             F = np.dot(E, b_store)
             ad_n = min(math.sqrt(F * F + E * E), 1.2)
 
-            for jj in range(0, num_foc_t):
-                if xq[index + 1] - xq[index] < 0:
-                    theta4[jj, 0] = math.pi + math.atan((yd_n[jj + 1] - yd_n[jj]) / xd_n[jj + 1] - xd_n[jj])
+            for nn in range(0, num_t):
+                if xq[index_no + 1] - xq[index_no] < 0:
+                    theta4[nn, 0] = math.pi + math.atan((yd_n[nn + 1] - yd_n[nn]) / xd_n[nn + 1] - xd_n[nn])
                 else:
-                    theta4[jj, 0] = math.atan((yd_n[jj + 1] - yd_n[jj]) / xd_n[jj + 1] - xd_n[jj])
+                    theta4[nn, 0] = math.atan((yd_n[nn + 1] - yd_n[nn]) / xd_n[nn + 1] - xd_n[nn])
 
-            theta4_n = theta4[num_foc_t, 0]
+            theta4_n = theta4[num_t, 0]
 
-            x_store[:, tr] = xd_n
-            y_store[:, tr] = yd_n
+            store_x[:, tr] = xd_n
+            store_y[:, tr] = yd_n
             iterate = iterate + 1
 
-    return x_store, y_store, vd_n, ad_n, wd_n, theta4_n, T_fin
+    return store_x, store_y, vd_n, ad_n, wd_n, theta4_n, T_fin
 
 
-def initialization1(velocity, acceleration_in_x, z, time, p, indexes, angle):
+def initialization1(velocity, acceleration_in_x, omega, time, p, indexes, angle):
     global xq, yq, trajectory
     trajectory = 1
 
@@ -380,8 +399,8 @@ def initialization1(velocity, acceleration_in_x, z, time, p, indexes, angle):
     v_f = velocity[p + 1]
     t_i = 0
     t_f = time[p + 1] - time[p]
-    w_i = z[p]
-    w_f = z[p + 1]
+    w_i = omega[p]
+    w_f = omega[p + 1]
     a_i = acceleration_in_x[p]
     a_f = acceleration_in_x[p + 1]
 
@@ -391,12 +410,12 @@ def initialization1(velocity, acceleration_in_x, z, time, p, indexes, angle):
     else:
         theta2 = math.atan(m_tang2)
 
-    P_matrix = [[1, t_i, t_i ** 2, t_i ** 3, t_i ** 4, t_i ** 5],
-                [0, 1, 2 * t_i, 3 * (t_i ** 2), 4 * (t_i ** 3), 5 * (t_i ** 4)],
-                [0, 0, 2, 6 * t_i, 12 * (t_i ** 2), 20 * (t_i ** 3)],
-                [1, t_f, t_f ** 2, t_f ** 3, t_f ** 4, t_f ** 5],
-                [0, 1, 2 * t_f, 3 * (t_f ** 2), 4 * (t_f ** 3), 5 * (t_f ** 4)],
-                [0, 0, 2, 6 * t_f, 12 * (t_f ** 2), 20 * (t_f ** 3)]]
+    P_matrix = np.array([[1, t_i, t_i ** 2, t_i ** 3, t_i ** 4, t_i ** 5],
+                         [0, 1, 2 * t_i, 3 * (t_i ** 2), 4 * (t_i ** 3), 5 * (t_i ** 4)],
+                         [0, 0, 2, 6 * t_i, 12 * (t_i ** 2), 20 * (t_i ** 3)],
+                         [1, t_f, t_f ** 2, t_f ** 3, t_f ** 4, t_f ** 5],
+                         [0, 1, 2 * t_f, 3 * (t_f ** 2), 4 * (t_f ** 3), 5 * (t_f ** 4)],
+                         [0, 0, 2, 6 * t_f, 12 * (t_f ** 2), 20 * (t_f ** 3)]])
 
     vx_i = v_i * math.cos(angle)
     vx_f = v_f * math.cos(theta2)
@@ -415,7 +434,7 @@ def initialization1(velocity, acceleration_in_x, z, time, p, indexes, angle):
 
 def initialization3_1(x_init, y_init, vel, vd_n, wd_n, ad_n, index, theta4):
     global W_f, x_set, y_set, mtang4
-    num_foc_t = 10
+    num_t = 10
     trajectory = 1
     T_i = 0
     j = 0
@@ -437,7 +456,7 @@ def initialization3_1(x_init, y_init, vel, vd_n, wd_n, ad_n, index, theta4):
         else:
             theta_4 = math.atan(mtang4)
 
-        V_f = min(vel[:, 0])
+        V_f = min(vel[:])
 
         if j > 0:
             W_f = V_f * meng[0, 0]
@@ -465,24 +484,24 @@ def initialization3_1(x_init, y_init, vel, vd_n, wd_n, ad_n, index, theta4):
         xt_f = xq[index + 1]
         yt_f = yq[index + 1]
 
-        g1 = np.array([[x_init, Vx_i, Ax_i, xt_f, Vx_f, Ax_f]]).T
-        g2 = np.array([[y_init, Vy_i, Ay_i, yt_f, Vy_f, Ay_f]]).T
+        g_matrix1 = np.array([[x_init, Vx_i, Ax_i, xt_f, Vx_f, Ax_f]]).T
+        g_matrix2 = np.array([[y_init, Vy_i, Ay_i, yt_f, Vy_f, Ay_f]]).T
 
-        a_coeff = np.linalg.lstsq(P, g1)
-        b_coeff = np.linalg.lstsq(P, g2)
+        a_coeff = np.linalg.lstsq(P, g_matrix1)
+        b_coeff = np.linalg.lstsq(P, g_matrix2)
 
-        xd = np.zeros((num_foc_t + 1, 1))
-        yd = np.zeros((num_foc_t + 1, 1))
+        xd = np.zeros((num_t + 1, 1))
+        yd = np.zeros((num_t + 1, 1))
         td = T_i
 
-        for f in range(0, num_foc_t + 1):
+        for f in range(0, num_t + 1):
             xd[f, 1] = [1, td, td ** 2, td ** 3, td ** 4, td ** 5] * a_coeff
             yd[f, 1] = [1, td, td ** 2, td ** 3, td ** 4, td ** 5] * b_coeff
-            td = td + (T_f - T_i) / num_foc_t
+            td = td + (T_f - T_i) / num_t
 
-        curvature[:, 0] = curvature_fn(xd, yd)
+        curvature = menger_curv(xd, yd)
 
-        if max(curvature[:, 0] <= 0.15):
+        if max(curvature[:] <= 0.15):
             x_set = xq[index + 1]
             y_set = yq[index + 1]
             iteration = iteration + 1
@@ -594,14 +613,14 @@ def initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, the
 
 def cost(xd1, yd1, x_centre, y_centre, phase_chosen):
     global total_cost
-    if max(curvature_fn(xd1, yd1)) <= 0.15:
+    if max(menger_curv[:, 0]) <= 0.15:
         if phase_chosen == 2:
             cost1 = 0
-            cost2 = np.sum(math.sqrt(np.square(x_centre - xd1) + np.square(y_centre - yd1)))
+            cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
             total_cost = 2 * cost1 + 0.5 * cost2
         else:
-            cost1 = 1 / max(min(math.sqrt(np.square(xd1 - dyn1_x) + np.square(yd1 - dyn1_y))) - 2, 0.01)
-            cost2 = np.sum(math.sqrt(np.square(x_centre - xd1) + np.square(y_centre - yd1)))
+            cost1 = max(min(np.sqrt(np.add(np.square(xd1 - dyn1_x), np.square(yd1 - dyn1_y))) - 2), 0.01)
+            cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
             total_cost = 2 * cost1 + 0.5 * cost2
 
     else:
@@ -611,8 +630,8 @@ def cost(xd1, yd1, x_centre, y_centre, phase_chosen):
 
 
 ogm = environment_load()
-xq = ogm[0, 4, :]
-yq = ogm[1, 4, :]
+xq = ogm[0, 3, :]
+yq = ogm[1, 3, :]
 x_set_init = 0
 y_set_init = 2
 V_init = 0
@@ -628,26 +647,21 @@ lane_status = 0
 
 # variable definition
 
-T_fin = []
-xd_n = []
-yd_n = []
-theta4_n = []
-g1 = []
-g2 = []
-x_store = []
-y_store = []
-x_store_n = []
-y_store_n = []
-a_coefficient_store = []
-b_coefficient_store = []
-time_store = []
-cost_store = []
-curvature = []
-xf = []
-yf = []
-x_f = []
-y_f = []
-num_foc_t = 0
+# T_fin = []
+xd_n = np.zeros((11, 1))
+yd_n = np.zeros((11, 1))
+# theta4_n = []
+# g1 = []
+# g2 = []
+# time_store = []
+# cost_store = []
+# curvature = []
+# xf = []
+# yf = []
+# x_f = []
+# y_f = []
+
+num_foc_t = 10
 v_obs = 1.5
 V_max = 5
 horizon = 5
@@ -671,304 +685,317 @@ wd_n = 0
 ad_n = 0
 theta4 = 0
 a = 0
-k = 0
 itr4 = 0
 jj = 0
-m_tang3 = 0
-m_tang4 = 0
+cost_store = np.zeros((1, 5))
+# m_tang3 = 0
+# m_tang4 = 0
+
 while index < len(xq):
-    global x_set, y_set, Ax_f, Ax_i, Ay_f, Ay_i, Vx_f, Vx_i, Vy_f, Vy_i, P, T_i, T_f, V_f, xNormalLine1, xNormalLine, m_tang, T_add
+    global x_set, y_set, Ax_f, Ax_i, Ay_f, Ay_i, Vx_f, Vx_i, Vy_f, Vy_i, P, T_i, T_f, V_f, xNormalLine1, xNormalLine, m_tang, T_add, var, a_coefficient_store, b_coefficient_store, x_store, y_store, k, time_store
     if state == 5:
         state = prev_state
-        [xr, yr, vel, a_long, w, t] = vel_prof(xq[index:index + horizon], yq[index: index + horizon], V_init, A_init,
-                                               t_init, state)
-        i = 1
-        tempor = prev_state
-        prev_state = state
-        itr = 0
+    [xr, yr, vel, a_long, w, t] = vel_prof(xq[index:index + horizon], yq[index: index + horizon], V_init, A_init,
+                                           t_init, state)
+    i = 1
+    tempor = prev_state
+    prev_state = state
+    itr = 0
 
-        while state == prev_state:
-            m_tang = (yq[index + 1] - yq[index]) / (xq[index + 1] - xq[index])
-            m_perp = -1 / m_tang
-            m_tang_np = (yq[index + 2] - yq[index + 1]) / (xq[index + 2] - xq[index + 1])
-            m_perp_np = -1 / m_tang_np
+    while state == prev_state:
+        m_tang = (yq[index + 1] - yq[index]) / (xq[index + 1] - xq[index])
+        m_perp = -1 / m_tang
+        m_tang_np = (yq[index + 2] - yq[index + 1]) / (xq[index + 2] - xq[index + 1])
+        m_perp_np = -1 / m_tang_np
 
-            xNormalLine = (1 / m_perp) * [yq - yq[index + 1]] + xq[index + 1]
-            if xq[index + 1] - xq[index] < 0:
-                theta = math.pi + math.atan(m_tang)
+        xNormalLine = np.dot((1 / m_perp), np.add((yq - yq[index + 1]), xq[index]))
+        if xq[index + 1] - xq[index] < 0:
+            theta = math.pi + math.atan(m_tang)
+        else:
+            theta = math.atan(m_tang)
+
+        # phase1 corresponds to overtaking and phase2 corresponds to returning to reference line
+
+        if state != 2 and phase == 0:
+            (Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P,
+             trajectory) = initialization1(vel, a_long, w, t, i, index, theta)
+
+        # elif state == 2 and phase == 2:
+        #     (Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P,
+        #      trajectory) = initialization3_1(x_set_init, y_set_init, vel, vd_n, wd_n, ad_n, index, theta4)
+        # elif state == 2 and phase == 1:
+        #     [Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P, trajectory, itr2,
+        #      m_perp3, itr4, jj] = initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, theta,
+        #                                            theta4, itr4, jj)
+        #     xNormalLine1 = (1 / m_perp3) * (yq - dyn1_y) + dyn1_x
+
+        for h in range(0, trajectory):
+            xt_f = x_set[h]
+            yt_f = y_set[h]
+
+            if state == 2 and phase == 2:
+                # inspect here
+                g1 = np.zeros(6, 1)
+                g2 = np.zeros(6, 1)
+                g1[h] = np.array([[x_set_init], [Vx_i], [Ax_i], [xt_f], [Vx_f[h]], [Ax_f[h]]])
+                g2[h] = np.array([[y_set_init], [Vy_i], [Ay_i], [yt_f], [Vy_f[h]], [Ay_f[h]]])
+
+                a_coeff = np.linalg.lstsq(P[:, :, h], g1[:, h])
+                b_coeff = np.linalg.lstsq(P[:, :, h], g2[:, h])
+
             else:
-                theta = math.atan(m_tang)
+                g1 = np.array([[x_set_init], [Vx_i], [Ax_i], [xt_f], [Vx_f], [Ax_f]])
+                g2 = np.array([[y_set_init], [Vy_i], [Ay_i], [yt_f], [Vy_f], [Ay_f]])
 
-            if state != 2 and phase == 0:
-                (Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P,
-                 trajectory) = initialization1(vel, a_long, w, t, i, index, theta)
+                a_coeff = np.linalg.lstsq[P, g1]
+                b_coeff = np.linalg.lstsq[P, g2]
 
-            elif state == 2 and phase == 2:
-                (Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P,
-                 trajectory) = initialization3_1(x_set_init, y_set_init, vel, vd_n, wd_n, ad_n, index, theta4)
-            elif state == 2 and phase == 1:
-                [Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P, trajectory, itr2,
-                 m_perp3, itr4, jj] = initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, theta,
-                                                       theta4, itr4, jj)
-                xNormalLine1 = (1 / m_perp3) * (yq - dyn1_y) + dyn1_x
-            for h in range(1, trajectory):
-                xt_f = x_set[h, 0]
-                yt_f = y_set[h, 0]
+            num_foc_t = 10
+            xd = np.zeros((num_foc_t + 1, 1))
+            yd = np.zeros((num_foc_t + 1, 1))
+            xd_o = np.zeros((num_foc_t + 1, 1))
+            yd_o = np.zeros((num_foc_t + 1, 1))
+            x_cen = np.zeros((num_foc_t + 1, 1))
+            y_cen = np.zeros((num_foc_t + 1, 1))
+            TD = np.zeros((num_foc_t + 1, 1))
+            vd = np.zeros((num_foc_t + 1, 1))
+            wd = np.zeros((num_foc_t + 1, 1))
+            td = T_i
+            x_point = np.zeros((num_foc_t + 1, 1))
+            y_point = np.zeros((num_foc_t + 1, 1))
+            x_pnt = np.zeros((num_foc_t + 1, 1))
+            y_pnt = np.zeros((num_foc_t + 1, 1))
 
+            for f in range(0, num_foc_t + 1):
+                xd[f] = [1, td, td ** 2, td ** 3, td ** 4, td ** 5] * a_coeff
+                yd[f] = [1, td, td ** 2, td ** 3, td ** 4, td ** 5] * b_coeff
+
+                td_old = td
                 if state == 2 and phase == 2:
-                    g1[:, h] = [[x_set_init], [Vx_i], [Ax_i], xt_f[h, 0], Vx_f[h, 0], Ax_f[h, 0]]
-                    g2[:, h] = [[y_set_init], [Vy_i], [Ay_i], yt_f[h, 0], Vy_f[h, 0], Ay_f[h, 0]]
-
-                    a_coeff = np.linalg.lstsq(P[:, :, h], g1[:, h])
-                    b_coeff = np.linalg.lstsq(P[:, :, h], g2[:, h])
-
+                    td = td + (T_f[h] - T_i) / num_foc_t
                 else:
-                    g1 = [[x_set_init], Vx_i, Ax_i, xt_f, Vx_f, Ax_f]
-                    g2 = [[x_set_init], Vy_i, Ay_i, yt_f, Vy_f, Ay_f]
+                    td = td + (T_f - T_i) / num_foc_t
 
-                    a_coeff = np.linalg.lstsq[P, g1]
-                    b_coeff = np.linalg.lstsq[P, g2]
+                TD[f] = td
 
-                num_foc_t = 10
-                xd = np.zeros((num_foc_t + 1, 1))
-                yd = np.zeros((num_foc_t + 1, 1))
-                xd_o = np.zeros((num_foc_t + 1, 1))
-                yd_0 = np.zeros((num_foc_t + 1, 1))
-                x_cen = np.zeros((num_foc_t + 1, 1))
-                y_cen = np.zeros((num_foc_t + 1, 1))
-                TD = np.zeros((num_foc_t + 1, 1))
-                vd = np.zeros((num_foc_t + 1, 1))
-                wd = np.zeros((num_foc_t + 1, 1))
-                td = T_i
-                xpoint = np.zeros((num_foc_t + 1, 1))
-                ypoint = np.zeros((num_foc_t + 1, 1))
-                xpnt = np.zeros((num_foc_t + 1, 1))
-                ypnt = np.zeros((num_foc_t + 1, 1))
+                x_cen[f] = np.add(xq[index], np.dot(f, np.divide(np.subtract(xq[index + 1], xq[index]), num_foc_t)))
+                y_cen[f] = np.add(yq[index], np.dot(f, np.divide(np.subtract(yq[index + 1], yq[index]), num_foc_t)))
 
-                for f in range(1, num_foc_t + 1):
-                    xd[f, 1] = [[1], [td], [td ** 2], [td ** 3], [td ** 4], [td ** 5]] * a_coeff
-                    yd[f, 1] = [[1], [td], [td ** 2], [td ** 3], [td ** 4], [td ** 5]] * b_coeff
+            if trajectory == 1:
+                x_store = xd
+                y_store = yd
+                x_store_n = x_store
+                y_store_n = y_store
+                a_coefficient_store = a_coeff
+                b_coefficient_store = b_coeff
+                time_store = TD
 
-                    td_old = td
-                    if state == 2 and phase == 2:
-                        td = td + (T_f[h, 1] - T_i) / num_foc_t
-                    else:
-                        td = td + (T_f - T_i) / num_foc_t
+            elif trajectory == 5:
+                x_store = np.zeros(11, 1)
+                y_store = np.zeros(11, 1)
+                x_store_n = np.zeros(11, 1)
+                y_store_n = np.zeros(11, 1)
+                a_coefficient_store = np.zeros(11, 1)
+                b_coefficient_store = np.zeros(11, 1)
+                time_store = np.zeros(11, 1)
 
-                    TD[f, 0] = td
+                x_store[h] = xd
+                y_store[h] = yd
+                x_store_n[h] = x_store[h]
+                y_store_n[h] = y_store[h]
+                a_coefficient_store[h] = a_coeff
+                b_coefficient_store[h] = b_coeff
+                time_store[h] = TD
 
-                    x_cen[f, 0] = xq[index, 0] + f * ((xq[index + 1, 0] - xq[index, 0]) / num_foc_t)
-                    y_cen[f, 0] = yq[index, 0] + f * ((yq[index + 1, 0] - yq[index, 0]) / num_foc_t)
+            d = np.argmin(np.abs(xq - dyn1_x))
+            if m_tang == math.inf:
+                if yq[d] < dyn1_y:
+                    var = d + 1
+                elif yq[d] >= dyn1_y:
+                    var = d
+            else:
+                if xq[d] < dyn1_x:
+                    var = d + 1
+                elif xq[d] >= dyn1_x:
+                    var = d
 
-                if trajectory == 1:
-                    x_store = xd
-                    y_store = yd
-                    x_store_n = x_store
-                    y_store_n = y_store
-
-                    a_coefficient_store = a_coeff
-                    b_coefficient_store = b_coeff
-                    time_store = TD
-
-                elif trajectory == 5:
-                    x_store[:, h] = xd
-                    y_store[:, h] = yd
-                    x_store_n[:, h] = x_store[:, h]
-                    y_store_n[:, h] = y_store[:, h]
-
-                    a_coefficient_store[:, h] = a_coeff
-                    b_coefficient_store[:, h] = b_coeff
-                    time_store[:, h] = TD
-
-                d = np.argmin(np.abs(xq - dyn1_x))
-                if m_tang == math.inf:
-                    if yq[d] < dyn1_y:
-                        j = d + 1
-                    elif yq[d] >= dyn1_y:
-                        j = d
-                else:
-                    if xq[d] < dyn1_x:
-                        j = d + 1
-                    elif xq[d] >= dyn1_x:
-                        j = d
-
-                for q in range(1, num_foc_t + 1):
-                    if index < j:  # checking for forward distance & itr1 flag is phase=2 detection(0 means phase~=2 and >0 means phase=2)
-                        if math.sqrt((xd[q, 0] - dyn1_x) ** 2 + (yd[q, 0] - dyn1_y) ** 2) < 11:
-                            if lane_status == 0:
-                                phase = 1
-                                state = 2
-                                xpnt[q, 1] = xd[q, 1]
-                                ypnt[q, 1] = yd[q, 1]
-                                s = np.where(xpnt)
-                                itr2 = itr2 + 1
-                                if itr2 == 1:
-                                    x_store[1:s, h] = xd[1:s, 1]
-                                    y_store[1:s, h] = yd[1:s, 1]
-                                    x_store[s + 1:num_foc_t, h] = xd[s, 1]
-                                    y_store[s + 1:num_foc_t, h] = yd[s, 1]
-                                    break
-                                elif itr2 > 1:
-                                    total_cost = cost(xd, yd, x_cen, y_cen, phase)
-                                    break
-
-                            elif lane_status == 1:
-                                state = 1
-
-                        else:
-                            phase = 0
-                            state = 0
-
-                    else:
-                        if phase == 2:
+            for q in range(1, num_foc_t + 1):
+                if index < var:  # checking for forward distance & itr1 flag is phase=2 detection(0 means phase~=2 and >0 means phase=2)
+                    if math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2) < 11:
+                        if lane_status == 0:
+                            phase = 1
                             state = 2
+                            x_pnt[q] = xd[q]
+                            y_pnt[q] = yd[q]
+                            s = np.where(x_pnt)
+                            itr2 = itr2 + 1  # itr2 is the flag just to check immediate detection of obstacle
+                            if itr2 == 1:  # when detected
+                                x_store[1:s, h] = xd[1:s, 1]  # not done yet
+                                y_store[1:s, h] = yd[1:s, 1]
+                                x_store[s + 1:num_foc_t, h] = xd[s, 1]
+                                y_store[s + 1:num_foc_t, h] = yd[s, 1]
+                                break
+                            elif itr2 > 1:
+                                total_cost = cost(xd, yd, x_cen, y_cen, phase)
+                                break
 
-                            break
-                        elif phase == 0:
-                            state = 0
+                        elif lane_status == 1:
+                            state = 1
 
-                if itr2 > 1 or phase == 1:
-                    cost_store[h, 0] = total_cost
-                    break
+                    else:
+                        phase = 0
+                        state = 0
+
+                else:
+                    if phase == 2:
+                        state = 2
+
+                        break
+                    elif phase == 0:
+                        state = 0
 
             if itr2 > 1 or phase == 1:
-                if cost_store[:, :] == math.inf:
-                    itr4 = 1
-                    break
-                else:
-                    k = np.argmin(cost_store)
-                    jj = 0
-                [x_store, y_store, vd_n, ad_n, wd_n, theta4, T_add] = overtake_1(a_coefficient_store,
-                                                                                 b_coefficient_store, x_store,
-                                                                                 y_store, T_i, k, m_tang, m_perp, index)
+                cost_store[h] = total_cost
+                break
 
-            elif phase == 2:
-                [x_store, y_store, vd_n, ad_n, wd_n, theta4, T_add] = overtake_1_2(a_coefficient_store,
-                                                                                   b_coefficient_store, x_store,
-                                                                                   y_store, T_i, m_tang, m_perp, index)
-
-            if state == 2 and itr2 > 1:
-                if phase == 1:
-                    x_set_init = x_store[num_foc_t + 1, k]
-                    y_set_init = y_store[num_foc_t + 1, k]
-                    dist = math.sqrt((x_set_init - dyn1_x) ** 2 + (y_set_init - dyn1_y) ** 2)
-                elif phase == 2:
-                    x_set_init = x_store[num_foc_t + 1, 1]
-                    y_set_init = y_store[num_foc_t + 1, 1]
-                    dist = math.sqrt((x_set_init - dyn1_x) ** 2 + (y_set_init - dyn1_y) ** 2)
-                    itr1 = itr1 + 1
-
+        if itr2 > 1 or phase == 1:
+            if cost_store[:] == math.inf:
+                itr4 = 1
+                break
             else:
-                x_set_init = x_store(num_foc_t + 1, 1)
-                y_set_init = y_store(num_foc_t + 1, 1)
-                dist = math.sqrt((x_set_init - dyn1_x) ** 2 + (y_set_init - dyn1_y) ** 2)
+                k = np.argmin(cost_store)
+                jj = 0
+            [x_store, y_store, vd_n, ad_n, wd_n, theta4, T_add] = overtake_1(a_coefficient_store,
+                                                                             b_coefficient_store, x_store,
+                                                                             y_store, T_i, k, m_tang, m_perp, index)
 
-        # plots
-
-        plt.plot(ogm[0, 2, :], ogm[1, 2, :], linewidth=2, c='black')
-        plt.plot(ogm[0, 4, :], ogm[1, 4, :], c='cyan')
-        plt.plot(ogm[0, 6, :], ogm[1, 6, :], linestyle='--')
-        plt.plot(ogm[0, 10, :], ogm[1, 10, :], linewidth=2, c='black')
-        plt.xlabel('X(m)')
-        plt.ylabel('Y(m)')
-        plt.axis([0, 165, -35, 35])
-        plt.show()
-
-        for b in range(0, trajectory):
-            plt.plot(x_store[:, b], y_store[:, b], linestyle='-', linewidth=1, c='blue')
-            plt.plot(xNormalLine, yq)
-            plt.show()
+        elif phase == 2:
+            [x_store, y_store, vd_n, ad_n, wd_n, theta4, T_add] = overtake_1_2(a_coefficient_store,
+                                                                               b_coefficient_store, x_store,
+                                                                               y_store, T_i, m_tang, m_perp, index)
 
         if state == 2 and itr2 > 1:
-            plt.plot(xNormalLine1, yq)
             if phase == 1:
-                plt.plot(x_store[:, k], y_store[:, k], linestyle='-', linewidth=2, c='black')
+                x_set_init = x_store[k]
+                y_set_init = y_store[k]
+                dist = math.sqrt((x_set_init - dyn1_x) ** 2 + (y_set_init - dyn1_y) ** 2)
+            elif phase == 2:
+                x_set_init = x_store[0]
+                y_set_init = y_store[0]
+                dist = math.sqrt((x_set_init - dyn1_x) ** 2 + (y_set_init - dyn1_y) ** 2)
+                itr1 = itr1 + 1
+
+        else:
+            x_set_init = x_store[0]
+            y_set_init = y_store[0]
+            dist = math.sqrt((x_set_init - dyn1_x) ** 2 + (y_set_init - dyn1_y) ** 2)
+
+    # plots
+
+    plt.plot(ogm[0, 2, :], ogm[1, 2, :], linewidth=2, c='black')
+    plt.plot(ogm[0, 4, :], ogm[1, 4, :], c='cyan')
+    plt.plot(ogm[0, 6, :], ogm[1, 6, :], linestyle='--')
+    plt.plot(ogm[0, 10, :], ogm[1, 10, :], linewidth=2, c='black')
+    plt.xlabel('X(m)')
+    plt.ylabel('Y(m)')
+    plt.axis([0, 165, -35, 35])
+    plt.show()
+
+    for b in range(0, trajectory):
+        plt.plot(x_store[:, b], y_store[:, b], linestyle='-', linewidth=1, c='blue')
+        plt.plot(xNormalLine, yq)
+        plt.show()
+
+    if state == 2 and itr2 > 1:
+        plt.plot(xNormalLine1, yq)
+        if phase == 1:
+            plt.plot(x_store[:, k], y_store[:, k], linestyle='-', linewidth=2, c='black')
+            for r in range(0, num_foc_t + 1):
+                plt.plot(x_store[r, k], y_store[r, k], markersize=6)
+                plt.plot(dyn1_x, dyn1_y, markersize=10, markerfacecolor='magenta')
+                plt.title('Detected state = ', str(state))
+                plt.show()
+                plt.pause(0.001)
+
+        elif phase == 2:
+            if itr == 1:
+                plt.plot(x_store[:, k], y_store[:, k], linestyle='-', linewidth=2, c='blue')
                 for r in range(0, num_foc_t + 1):
                     plt.plot(x_store[r, k], y_store[r, k], markersize=6)
-                    plt.plot(dyn1_x, dyn1_y, markersize=10, markerfacecolor='magenta')
-                    plt.title('Detected state = ', str(state))
-                    plt.show()
-                    plt.pause(0.001)
-
-            elif phase == 2:
-                if itr == 1:
-                    plt.plot(x_store[:, k], y_store[:, k], linestyle='-', linewidth=2, c='blue')
-                    for r in range(0, num_foc_t + 1):
-                        plt.plot(x_store[r, k], y_store[r, k], markersize=6)
-                        plt.plot(dyn1_x, dyn1_y, markerSize=10, markerFaceColor='magenta')
-                        plt.title(['Detected state = ', str(state)])
-                        plt.show()
-                        plt.pause(0.01)
-                elif itr1 > 1:
-                    plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth=2, c='blue')
-                    for r in range(0, num_foc_t + 1):
-                        plt.plot(x_store[r, 0], y_store[r, 10], markersize=6)
-                        plt.plot(dyn1_x, dyn1_y, markerSize=6, markerFaceColor='magenta')
-                        plt.title(['Detected state = ', str(state)])
-                        plt.show()
-                        plt.pause(0.01)
-
-            else:
-                plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth='2', color='red')
-                for r in range(0, num_foc_t + 1):
-                    plt.plot(x_store(r, 1), y_store(r, 1), markersize=6)
                     plt.plot(dyn1_x, dyn1_y, markerSize=10, markerFaceColor='magenta')
                     plt.title(['Detected state = ', str(state)])
                     plt.show()
                     plt.pause(0.01)
+            elif itr1 > 1:
+                plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth=2, c='blue')
+                for r in range(0, num_foc_t + 1):
+                    plt.plot(x_store[r, 0], y_store[r, 10], markersize=6)
+                    plt.plot(dyn1_x, dyn1_y, markerSize=6, markerFaceColor='magenta')
+                    plt.title(['Detected state = ', str(state)])
+                    plt.show()
+                    plt.pause(0.01)
 
-        if state == 2 and itr2 > 1:
-            if phase == 1:
-                if m_tang == 0:
+        else:
+            plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth='2', color='red')
+            for r in range(0, num_foc_t + 1):
+                plt.plot(x_store(r, 1), y_store(r, 1), markersize=6)
+                plt.plot(dyn1_x, dyn1_y, markerSize=10, markerFaceColor='magenta')
+                plt.title(['Detected state = ', str(state)])
+                plt.show()
+                plt.pause(0.01)
+
+    if state == 2 and itr2 > 1:
+        if phase == 1:
+            if m_tang == 0:
+                if x_store[num_foc_t + 1, k] > dyn1_x:
+                    phase = 2
+                    itr1 = itr1 + 1
+            elif m_tang == math.inf:
+                if y_store[num_foc_t + 1, k] > dyn1_y:
+                    phase = 2
+                    itr1 = itr1 + 1
+            elif m_tang != 0:
+                if xq[index + 1] - xq[index] < 0 or yq[index + 1] - yq[index] < 0:
+                    if x_store[num_foc_t + 1, k] <= dyn1_x and y_store[num_foc_t + 1, k] <= dyn1_y:
+                        phase = 2
+                        itr1 = itr1 + 1
+                else:
                     if x_store[num_foc_t + 1, k] > dyn1_x:
                         phase = 2
                         itr1 = itr1 + 1
-                elif m_tang == math.inf:
-                    if y_store[num_foc_t + 1, k] > dyn1_y:
-                        phase = 2
-                        itr1 = itr1 + 1
-                elif m_tang != 0:
-                    if xq[index + 1] - xq[index] < 0 or yq[index + 1] - yq[index] < 0:
-                        if x_store[num_foc_t + 1, k] <= dyn1_x and y_store[num_foc_t + 1, k] <= dyn1_y:
-                            phase = 2
-                            itr1 = itr1 + 1
-                    else:
-                        if x_store[num_foc_t + 1, k] > dyn1_x:
-                            phase = 2
-                            itr1 = itr1 + 1
 
-            elif phase == 2:
-                if x_store[num_foc_t + 1, 1] == xq[index + 1] and y_store[num_foc_t + 1] == yq[index + 1]:
-                    phase = 0
-                    state = 0
-                    itr = itr + 1
+        elif phase == 2:
+            if x_store[num_foc_t + 1, 1] == xq[index + 1] and y_store[num_foc_t + 1] == yq[index + 1]:
+                phase = 0
+                state = 0
+                itr = itr + 1
 
-        if itr2 == 0:
-            t_init = t[i + 1]
-        elif itr2 == 1:
-            t_init = t[i] + time_store[i]
-        elif itr2 > 1 and state == 2:
-            t_init = t[i] + T_add
+    if itr2 == 0:
+        t_init = t[i + 1]
+    elif itr2 == 1:
+        t_init = t[i] + time_store[i]
+    elif itr2 > 1 and state == 2:
+        t_init = t[i] + T_add
 
-        i = i + 1
+    i = i + 1
 
-        if state != prev_state:
-            if phase == 0 and itr != 0:
-                V_init = vd_n
-                A_init = ad_n
-                index = index + 1
-                itr1 = 0
-
-            itr2 = 0
-            break
-        if i >= horizon:
-            state = 5
-
-        index = index + 1
-
-        if phase == 2:
+    if state != prev_state:
+        if phase == 0 and itr != 0:
             V_init = vd_n
             A_init = ad_n
-        else:
-            V_init = V_f
-            A_init = A_f
+            index = index + 1
+            itr1 = 0
+
+        itr2 = 0
+        break
+    if i >= horizon:
+        state = 5
+
+    index = index + 1
+
+    if phase == 2:
+        V_init = vd_n
+        A_init = ad_n
+    else:
+        V_init = V_f
+        A_init = A_f
