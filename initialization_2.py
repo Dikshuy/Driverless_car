@@ -118,8 +118,8 @@ def initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, the
         Ay_f = A_f * math.sin(theta3) + V_f * math.cos(theta3) * W_f
 
     x_set = np.array([[x_f - math.sin(theta3) * l_off, x_f - 0.5 * math.sin(theta3) * l_off, x_f,
-                       x_f + math.sin(theta3) * l_off, x_f + 1.5 * math.sin(theta3) * l_off]]).T
+                       x_f + math.sin(theta3) * l_off, x_f + 1.5 * math.sin(theta3) * l_off]])
     y_set = np.array([[y_f + math.cos(theta3) * l_off, y_f + 0.5 * math.cos(theta3) * l_off, y_f,
-                       y_f - math.cos(theta3) * l_off, y_f - 1.5 * math.cos(theta3) * l_off]]).T
+                       y_f - math.cos(theta3) * l_off, y_f - 1.5 * math.cos(theta3) * l_off]])
 
     return Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P, trajectory, itr2, m_perp3, itr4, jj
