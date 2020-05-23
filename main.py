@@ -150,10 +150,10 @@ def menger_curv(x, y):
 def vel_prof(x, y, v0, a0, t0, current_state):
     global v_obs, V_max, critical_dis, follow_dis, dyn_x, dyn_y, dyn1_x, dyn1_y
     length_of_array_x = len(x)
-    vel_matrix = np.zeros((length_of_array_x, 1))
-    longitudinal_acceleration = np.zeros((length_of_array_x, 1))
-    wt = np.zeros((length_of_array_x, 1))
-    current_time = np.zeros((length_of_array_x, 1))
+    vel_matrix = np.zeros(length_of_array_x)
+    longitudinal_acceleration = np.zeros(length_of_array_x)
+    wt = np.zeros(length_of_array_x)
+    current_time = np.zeros(length_of_array_x)
     c = menger_curv(x, y)
     a_lat_max = 0.2
     a_long_max = 0.5
@@ -321,6 +321,7 @@ def overtake_1(a_store, b_store, store_x, store_y, T_initial, kk, tang_m, perpen
             store_x[:, tr:tr + 1] = xd_n
             store_y[:, tr:tr + 1] = yd_n
             iterate = iterate + 1
+    print("i am overatking 1")
 
     return store_x, store_y, vd_n, ad_n, wd_n, theta4_n, T_fin
 
@@ -388,6 +389,7 @@ def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendi
             store_x[:, tr] = xd_n
             store_y[:, tr] = yd_n
             iterate = iterate + 1
+    print(" i am overtaking2")
 
     return store_x, store_y, vd_n, ad_n, wd_n, theta4_n, T_fin
 
@@ -399,7 +401,6 @@ def initialization1(velocity, acceleration_in_x, omega, time, p, indexes, angle)
     v_f = velocity[p + 1]
     t_i = 0.0
     t_f = time[p + 1] - time[p]
-    t_f = t_f[0]
     w_i = omega[p]
     w_f = omega[p + 1]
     a_i = acceleration_in_x[p]
@@ -427,14 +428,15 @@ def initialization1(velocity, acceleration_in_x, omega, time, p, indexes, angle)
     ay_i = a_i * math.sin(angle) + v_i * math.cos(angle) * w_i
     ay_f = a_f * math.sin(theta2) + v_f * math.cos(theta2) * w_f
 
-    x_set = [xq[indexes + 1]]
-    y_set = [yq[indexes + 1]]
+    x_set[0] = xq[indexes + 1]
+    y_set[0] = yq[indexes + 1]
+    print("i am in 1")
 
     return vx_i, vx_f, vy_i, vy_f, ax_i, ax_f, ay_i, ay_f, t_i, t_f, v_f, a_f, x_set, y_set, P_matrix, trajectory
 
 
 def initialization3_1(x_init, y_init, vel, vd_n, wd_n, ad_n, index, theta4):
-    global W_f, mtang4
+    global W_f, mtang4, trajectory
     num_t = 10
     trajectory = 1
     t_i = 0
@@ -509,12 +511,12 @@ def initialization3_1(x_init, y_init, vel, vd_n, wd_n, ad_n, index, theta4):
         else:
             index = index + 1
             j = j + 1
+    print("i am in 3")
+    return Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P, trajectory, mtang4
 
-        return Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P, trajectory, mtang4
 
-
-def initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, theta, theta4, itr4, jj):
-    global m_tang3, xf, yf, x_f, y_f
+def initialization_2(velocity, long_acc, omega, ind, distance, itr2, vd_n, wd_n, ad_n, index, theta, theta4, itr4, jj):
+    global m_tang3, xf, yf, x_f, y_f, trajectory
     l_off = 2
     trajectory = 5
     if itr4 == 1:
@@ -557,29 +559,29 @@ def initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, the
         x_f = xq[cc]
         y_f = yq[cc]
     elif xq[cc] == dyn1_x and yq[cc] == dyn1_y:
-        xf = np.array([[xq[cc - 1], dyn1_x, xq[cc + 1]]]).T
-        yf = np.array([[yq[cc - 1], dyn1_y, yq[cc + 1]]]).T
+        xf = np.array([xq[cc - 1], dyn1_x, xq[cc + 1]])
+        yf = np.array([yq[cc - 1], dyn1_y, yq[cc + 1]])
         x_f = xq[cc + 1]
         y_f = yq[cc + 1]
     elif yq[cc] != dyn1_y:
-        xf = np.array([[xq[cc - 1], xq[cc], xq[cc + 1]]]).T
-        yf = np.array([[yq[cc - 1], yq[cc], yq[cc + 1]]]).T
+        xf = np.array([xq[cc - 1], xq[cc], xq[cc + 1]])
+        yf = np.array([yq[cc - 1], yq[cc], yq[cc + 1]])
         x_f = xq[cc + 1]
         y_f = yq[cc + 1]
 
     if itr2 > 1:
         V_i = vd_n
     else:
-        V_i = vel[i]
+        V_i = velocity[ind]
 
     V_f = V_max
     meng = menger_curv(xf, yf)
-    W_i = w[i]
+    W_i = omega[ind]
     W_f = V_f * meng[1, 0]
-    A_i = a_long[i]
+    A_i = long_acc[ind]
     A_f = 0
     t_i = 0.0
-    t_f = dist / V_i
+    t_f = distance / V_i
     P = np.array([[1, t_i, t_i ** 2, t_i ** 3, t_i ** 4, t_i ** 5],
                   [0, 1, 2 * t_i, 3 * (t_i ** 2), 4 * (t_i ** 3), 5 * (t_i ** 4)],
                   [0, 0, 2, 6 * t_i, 12 * (t_i ** 2), 20 * (t_i ** 3)],
@@ -607,10 +609,11 @@ def initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, the
         Ax_f = A_f * math.cos(theta3) - V_f * math.sin(theta3) * W_f
         Ay_f = A_f * math.sin(theta3) + V_f * math.cos(theta3) * W_f
 
-    x_set = np.array([[x_f - math.sin(theta3) * l_off, x_f - 0.5 * math.sin(theta3) * l_off, x_f,
-                       x_f + math.sin(theta3) * l_off, x_f + 1.5 * math.sin(theta3) * l_off]]).T
-    y_set = np.array([[y_f + math.cos(theta3) * l_off, y_f + 0.5 * math.cos(theta3) * l_off, y_f,
-                       y_f - math.cos(theta3) * l_off, y_f - 1.5 * math.cos(theta3) * l_off]]).T
+    x_set = np.array([x_f - math.sin(theta3) * l_off, x_f - 0.5 * math.sin(theta3) * l_off, x_f,
+                      x_f + math.sin(theta3) * l_off, x_f + 1.5 * math.sin(theta3) * l_off])
+    y_set = np.array([y_f + math.cos(theta3) * l_off, y_f + 0.5 * math.cos(theta3) * l_off, y_f,
+                      y_f - math.cos(theta3) * l_off, y_f - 1.5 * math.cos(theta3) * l_off])
+    print("i am in 2")
 
     return Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P, trajectory, itr2, m_perp3, itr4, jj
 
@@ -654,16 +657,16 @@ lane_status = 0
 
 a_coefficient_store = np.zeros((6, 5))
 b_coefficient_store = np.zeros((6, 5))
-xd_n = np.zeros((11, 1))
-yd_n = np.zeros((11, 1))
+xd_n = np.zeros(11)
+yd_n = np.zeros(11)
 x_store = np.zeros((11, 5))
 y_store = np.zeros((11, 5))
 time_store = np.zeros((11, 5))
 x_store_n = np.zeros((11, 5))
 y_store_n = np.zeros((11, 5))
-x_set = np.zeros((5, 1))
-y_set = np.zeros((5, 1))
-T_f = np.zeros((5, 1))
+x_set = np.zeros(5)
+y_set = np.zeros(5)
+T_f = np.zeros(5)
 T_fin = 0
 theta44 = np.zeros((11, 1))
 g1 = np.zeros((6, 1))
@@ -685,7 +688,6 @@ dyn1_y = 2
 total_cost = 0
 A_f = 0
 follow_dis = critical_dis
-trajectory = 1
 itr2 = 0
 itr1 = 0
 vd_n = 0
@@ -695,12 +697,13 @@ a = 0
 itr4 = 0
 jj = 0
 theta4_n = 0
+theta4 = 0
 cost_store = np.zeros((1, 5))
-# m_tang3 = 0
-# m_tang4 = 0
+count1 =0
+count2 = 0
 
 while index < len(xq):
-    global Ax_f, Ax_i, Ay_f, Ay_i, Vx_f, Vx_i, Vy_f, Vy_i, P, T_i, V_f, xNormalLine1, xNormalLine, m_tang, T_add, var, k, dist, s
+    global Ax_f, Ax_i, Ay_f, Ay_i, Vx_f, Vx_i, Vy_f, Vy_i, P, T_i, V_f, xNormalLine1, xNormalLine, m_tang, T_add, var, k, dist, s, trajectory
     if state == 5:
         state = prev_state
 
@@ -731,7 +734,7 @@ while index < len(xq):
             theta = math.atan(m_tang)
 
         # phase1 corresponds to overtaking and phase2 corresponds to returning to reference line
-    
+
         if state != 2 and phase == 0:
             (Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P,
              trajectory) = initialization1(vel, a_long, w, t, i, index, theta)
@@ -743,11 +746,12 @@ while index < len(xq):
             [Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, T_i, T_f, V_f, A_f, x_set, y_set, P, trajectory, itr2,
              m_perp3, itr4, jj] = initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, theta,
                                                    theta4, itr4, jj)
+
             xNormalLine1 = np.dot((1 / m_perp3), np.add((yq - dyn1_y), dyn1_x))
 
         for h in range(0, trajectory):
-            xt_f = x_set[h]
-            yt_f = y_set[h]
+            xt_f = x_set[0]
+            yt_f = y_set[0]
 
             if state == 2 and phase == 2:
                 g1[h] = np.array([[x_set_init], [Vx_i], [Ax_i], [xt_f], [Vx_f[h]], [Ax_f[h]]])
@@ -757,11 +761,11 @@ while index < len(xq):
                 b_coeff = np.matmul(P[h, :, :], g2[h, :])
 
             else:
-                g1 = np.array([[x_set_init], Vx_i, Ax_i, [xt_f], Vx_f, Ax_f])
-                print(g1.shape)
-                g2 = np.array([[y_set_init], Vy_i, Ay_i, [yt_f], Vy_f, Ay_f])
-                a_coeff = np.matmul(P, g1)
-                b_coeff = np.matmul(P, g2)
+                g1 = np.array([x_set_init, Vx_i, Ax_i, xt_f, Vx_f, Ax_f])
+                g2 = np.array([y_set_init, Vy_i, Ay_i, yt_f, Vy_f, Ay_f])
+                P_inv = np.linalg.inv(P)
+                a_coeff = np.dot(P_inv, g1)
+                b_coeff = np.dot(P_inv, g2)
 
             num_foc_t = 10
             xd = np.zeros((num_foc_t + 1, 1))
@@ -803,15 +807,17 @@ while index < len(xq):
                 a_coefficient_store = a_coeff
                 b_coefficient_store = b_coeff
                 time_store = TD
+                count1 = count1 + 1
 
             elif trajectory == 5:
-                x_store[:, h] = xd
-                y_store[:, h] = yd
-                x_store_n[:, h] = x_store[h]
-                y_store_n[:, h] = y_store[h]
-                a_coefficient_store[:, h] = a_coeff
-                b_coefficient_store[:, h] = b_coeff
-                time_store[:, h] = TD
+                x_store = xd
+                y_store = yd
+                x_store_n = x_store[h]
+                y_store_n = y_store[h]
+                a_coefficient_store = a_coeff
+                b_coefficient_store = b_coeff
+                time_store = TD
+                count2 = count2 + 1
 
             d = np.argmin(np.abs(xq - dyn1_x))
             if m_tang == math.inf:
@@ -825,7 +831,8 @@ while index < len(xq):
                 elif xq[d] >= dyn1_x:
                     var = d
 
-            for q in range(1, num_foc_t + 1):
+            for q in range(0, num_foc_t + 1):
+                print(math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2))
                 if index < var:  # checking for forward distance & itr1 flag is phase=2 detection(0 means phase~=2 and >0 means phase=2)
                     if math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2) < 11:
                         if lane_status == 0:
@@ -867,16 +874,15 @@ while index < len(xq):
                 else:
                     if phase == 2:
                         state = 2
-
                         break
                     elif phase == 0:
                         state = 0
 
-            if itr2 > 1 or phase == 1:
+            if itr2 > 1 and phase == 1:
                 cost_store[h] = total_cost
                 break
 
-        if itr2 > 1 or phase == 1:
+        if itr2 > 1 and phase == 1:
             if cost_store[:, :].any == math.inf:
                 itr4 = 1
                 break
@@ -919,10 +925,10 @@ while index < len(xq):
         plt.axis([0, 165, -35, 35])
         # plt.show()
 
-        for b in range(0, trajectory):
-            plt.plot(x_store[:, b], y_store[:, b], linestyle='-', linewidth=1, c='blue')
-            plt.plot(xNormalLine, yq)
-            # plt.show()
+        # for b in range(0, trajectory):
+        # plt.plot(x_store[:, b], y_store[:, b], linestyle='-', linewidth=1, c='blue')
+        # plt.plot(xNormalLine, yq)
+        # plt.show()
 
         if state == 2 and itr2 > 1:
             plt.plot(xNormalLine1, yq)
@@ -933,7 +939,7 @@ while index < len(xq):
                     plt.plot(dyn1_x, dyn1_y, markersize=10, markerfacecolor='magenta')
                     plt.title('Detected state = ', str(state))
                     # plt.show()
-                    plt.pause(0.001)
+                    # plt.pause(0.001)
 
             elif phase == 2:
                 if itr == 1:
@@ -943,7 +949,7 @@ while index < len(xq):
                         plt.plot(dyn1_x, dyn1_y, markerSize=10, markerFaceColor='magenta')
                         plt.title(['Detected state = ', str(state)])
                         # plt.show()
-                        plt.pause(0.01)
+                        # plt.pause(0.01)
                 elif itr1 > 1:
                     plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth=2, c='blue')
                     for r in range(0, num_foc_t + 1):
@@ -951,7 +957,7 @@ while index < len(xq):
                         plt.plot(dyn1_x, dyn1_y, markerSize=6, markerFaceColor='magenta')
                         plt.title(['Detected state = ', str(state)])
                         # plt.show()
-                        plt.pause(0.01)
+                        # plt.pause(0.01)
 
             else:
                 plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth='2', color='red')
@@ -1016,3 +1022,4 @@ while index < len(xq):
         else:
             V_init = V_f
             A_init = A_f
+    # plt.show()
