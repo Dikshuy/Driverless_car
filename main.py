@@ -282,13 +282,13 @@ def overtake_1(a_store, b_store, store_x, store_y, T_initial, kk, tang_m, perpen
                             T_fin = time[mm].real
 
             else:
-                p = np.array([[b_store[5] - perpendicular_m * a_store[5]],
-                              [b_store[4] - perpendicular_m * a_store[4]],
-                              [b_store[3] - perpendicular_m * a_store[3]],
-                              [b_store[2] - perpendicular_m * a_store[2]],
-                              [b_store[1] - perpendicular_m * a_store[1]],
-                              [b_store[0] - perpendicular_m * a_store[0] + perpendicular_m * xq[index_number + 1] - yq[
-                                  index_number + 1]]])
+                p = np.array([b_store[5] - perpendicular_m * a_store[5],
+                              b_store[4] - perpendicular_m * a_store[4],
+                              b_store[3] - perpendicular_m * a_store[3],
+                              b_store[2] - perpendicular_m * a_store[2],
+                              b_store[1] - perpendicular_m * a_store[1],
+                              b_store[0] - perpendicular_m * a_store[0] + perpendicular_m * xq[index_number + 1] - yq[
+                                  index_number + 1]])
 
                 time = np.roots(p)
                 for mm in range(0, len(time)):
@@ -354,18 +354,19 @@ def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendi
                             T_fin = time[mm].real
 
             else:
-                p = np.array([[b_store[5] - perpendicular_m * a_store[5]],
-                              [b_store[4] - perpendicular_m * a_store[4]],
-                              [b_store[3] - perpendicular_m * a_store[3]],
-                              [b_store[2] - perpendicular_m * a_store[2]],
-                              [b_store[1] - perpendicular_m * a_store[1]],
-                              [b_store[0] - perpendicular_m * a_store[0] + perpendicular_m * xq[index_no + 1] - yq[
-                                  index_no + 1]]])
+                p = np.array([b_store[5] - perpendicular_m * a_store[5],
+                              b_store[4] - perpendicular_m * a_store[4],
+                              b_store[3] - perpendicular_m * a_store[3],
+                              b_store[2] - perpendicular_m * a_store[2],
+                              b_store[1] - perpendicular_m * a_store[1],
+                              b_store[0] - perpendicular_m * a_store[0] + perpendicular_m * xq[index_no + 1] - yq[
+                                  index_no + 1]])
+
                 time = np.roots(p)
-                for nn in range(0, len(time)):
-                    if ~any(np.imag(time[nn])) == 1:
-                        if time[nn] > 0:
-                            T_fin = time[nn]
+                for mm in range(0, len(time)):
+                    if time[mm].imag == 0:
+                        if time[mm] > 0:
+                            T_fin = time[mm].real
 
             for ii in range(0, num_t + 1):
                 xd_n[ii] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], a_store)
@@ -373,11 +374,11 @@ def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendi
                 td_n = td_n + (T_fin - T_initial) / num_t
 
             curv = menger_curv(xd_n, yd_n)
-            A = np.array([0, 1, 2 * T_fin, 3 * (T_fin ** 2), 4 * (T_fin ** 3), 5 * (T_fin ** 4)])
+            A = np.array([0, 1, 2 * T_fin, 3 * T_fin ** 2, 4 * T_fin ** 3, 5 * T_fin ** 4])
             B = np.dot(A, a_store)
             C = np.dot(A, b_store)
             vd_n = max(min(math.sqrt(B * B + C * C), V_max), 0)
-            wd_n = vd_n * curv[num_t]
+            wd_n = vd_n * curv[num_t][0]
             D = np.array([0, 0, 2, 6 * T_fin, 12 * (T_fin ** 2), 20 * (T_fin ** 3)], ndmin=2)
             E = np.dot(D, a_store)
             F = np.dot(D, b_store)
@@ -763,21 +764,12 @@ while index < loop_counter:
             xt_f = x_set[0]
             yt_f = y_set[0]
 
-            if state == 2 and phase == 2:
-                g1 = np.array([x_set_init, Vx_i, Ax_i, xt_f, Vx_f, Ax_f])
-                g2 = np.array([y_set_init, Vy_i, Ay_i, yt_f, Vy_f, Ay_f])
+            g1 = np.array([x_set_init, Vx_i, Ax_i, xt_f, Vx_f, Ax_f])
+            g2 = np.array([y_set_init, Vy_i, Ay_i, yt_f, Vy_f, Ay_f])
 
-                P_inv = np.linalg.inv(P)
-                a_coeff = np.dot(P_inv, g1)
-                b_coeff = np.dot(P_inv, g2)
-                print(g1)
-
-            else:
-                g1 = np.array([x_set_init, Vx_i, Ax_i, xt_f, Vx_f, Ax_f])
-                g2 = np.array([y_set_init, Vy_i, Ay_i, yt_f, Vy_f, Ay_f])
-                P_inv = np.linalg.inv(P)
-                a_coeff = np.dot(P_inv, g1)
-                b_coeff = np.dot(P_inv, g2)
+            P_inv = np.linalg.inv(P)
+            a_coeff = np.dot(P_inv, g1)
+            b_coeff = np.dot(P_inv, g2)
 
             num_foc_t = 10
             xd = np.zeros(num_foc_t + 1)
@@ -808,27 +800,15 @@ while index < loop_counter:
                 x_cen[f] = np.add(xq[index], np.dot(f, np.divide(np.subtract(xq[index + 1], xq[index]), num_foc_t)))
                 y_cen[f] = np.add(yq[index], np.dot(f, np.divide(np.subtract(yq[index + 1], yq[index]), num_foc_t)))
 
-            if trajectory == 1:
-                x_store = xd
-                y_store = yd
-                x_store_n = x_store
-                y_store_n = y_store
-                a_coefficient_store = a_coeff
-                b_coefficient_store = b_coeff
-                time_store = TD
-                count1 = count1 + 1
+            x_store = xd
+            y_store = yd
+            x_store_n = x_store
+            y_store_n = y_store
+            a_coefficient_store = a_coeff
+            b_coefficient_store = b_coeff
+            time_store = TD
 
-            elif trajectory == 5:
-                x_store = xd
-                y_store = yd
-                x_store_n = x_store
-                y_store_n = y_store
-                a_coefficient_store = a_coeff
-                b_coefficient_store = b_coeff
-                time_store = TD
-                count2 = count2 + 1
-
-            d = np.argmin(np.abs(xq - 1 - dyn1_x))
+            d = np.argmin(np.abs(xq - dyn1_x))
             if m_tang == math.inf:
                 if yq[d] < dyn1_y:
                     var = d + 1
@@ -901,7 +881,6 @@ while index < loop_counter:
                                                                              y_store, T_i, k, m_tang, m_perp, index)
 
         elif phase == 2:
-            print(ad_n)
             [x_store, y_store, vd_n, ad_n, wd_n, theta4, T_add] = overtake_1_2(a_coefficient_store,
                                                                                b_coefficient_store, x_store,
                                                                                y_store, T_i, m_tang, m_perp, index)
@@ -924,10 +903,10 @@ while index < loop_counter:
 
         # plots
 
-        plt.plot(ogm[0, 2, :], ogm[1, 2, :], linewidth=0.8, c='black')
-        plt.plot(ogm[0, 4, :], ogm[1, 4, :], c='yellow')
-        plt.plot(ogm[0, 6, :], ogm[1, 6, :], linestyle='--')
-        plt.plot(ogm[0, 10, :], ogm[1, 10, :], linewidth=0.8, c='black')
+        plt.plot(ogm[0, 1, :], ogm[1, 1, :], linewidth=0.8, c='black')
+        plt.plot(ogm[0, 3, :], ogm[1, 3, :], c='yellow')
+        plt.plot(ogm[0, 5, :], ogm[1, 5, :], linestyle='--')
+        plt.plot(ogm[0, 9, :], ogm[1, 9, :], linewidth=0.8, c='black')
         plt.xlabel('X(m)')
         plt.ylabel('Y(m)')
         plt.axis([0, 165, -35, 35])
@@ -945,9 +924,9 @@ while index < loop_counter:
                 for r in range(0, num_foc_t + 1):
                     plt.plot(x_store[r], y_store[r], markersize=6)
                     plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
-                    plt.title('Detected state = ' + str(state))
+                    plt.title('Start overtaking')
                     # plt.show()
-                    # plt.pause(0.001)
+                    plt.pause(0.0000001)
 
             elif phase == 2:
                 if itr == 1:
@@ -955,26 +934,26 @@ while index < loop_counter:
                     for r in range(0, num_foc_t + 1):
                         plt.plot(x_store[r], y_store[r], markersize=6)
                         plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
-                        plt.title(['Detected state = ' + str(state)])
+                        plt.title('Detected state = ' + str(state))
                         # plt.show()
-                        # plt.pause(0.0001)
+                        plt.pause(0.0000001)
                 elif itr1 > 1:
                     plt.plot(x_store, y_store, linestyle='-', linewidth=2, c='blue')
                     for r in range(0, num_foc_t + 1):
                         plt.plot(x_store[r], y_store[r], markersize=6)
                         plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
-                        plt.title(['Detected state = ' + str(state)])
+                        plt.title('Back to reference line')
                         # plt.show()
-                        # plt.pause(0.0001)
+                        plt.pause(0.0000001)
 
         else:
             plt.plot(x_store, y_store, linestyle='-', linewidth='2')
             for r in range(0, num_foc_t + 1):
                 plt.plot(x_store, y_store, markersize=6)
                 plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
-                plt.title(['Detected state = ' + str(state)])
+                plt.title('Detected state = ' + str(state))
                 # plt.show()
-                # plt.pause(0.0001)
+                plt.pause(0.0000001)
 
         if state == 2 and itr2 > 1:
             if phase == 1:
