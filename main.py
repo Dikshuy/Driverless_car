@@ -287,7 +287,8 @@ def overtake_1(a_store, b_store, store_x, store_y, T_initial, kk, tang_m, perpen
                               b_store[3, tr] - perpendicular_m * a_store[3, tr],
                               b_store[2, tr] - perpendicular_m * a_store[2, tr],
                               b_store[1, tr] - perpendicular_m * a_store[1, tr],
-                              b_store[0, tr] - perpendicular_m * a_store[0, tr] + perpendicular_m * xq[index_number + 1] - yq[
+                              b_store[0, tr] - perpendicular_m * a_store[0, tr] + perpendicular_m * xq[
+                                  index_number + 1] - yq[
                                   index_number + 1]])
 
                 time = np.roots(p)
@@ -358,7 +359,8 @@ def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendi
                               b_store[3, tr] - perpendicular_m * a_store[3, tr],
                               b_store[2, tr] - perpendicular_m * a_store[2, tr],
                               b_store[1, tr] - perpendicular_m * a_store[1, tr],
-                              b_store[0, tr] - perpendicular_m * a_store[0, tr] + perpendicular_m * xq[index_no + 1] - yq[
+                              b_store[0, tr] - perpendicular_m * a_store[0, tr] + perpendicular_m * xq[index_no + 1] -
+                              yq[
                                   index_no + 1]])
 
                 time = np.roots(p)
@@ -389,7 +391,7 @@ def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendi
                 else:
                     theta44[mm, 0] = math.atan((yd_n[mm + 1] - yd_n[mm]) / xd_n[mm + 1] - xd_n[mm])
 
-            theta4_n = theta44[num_t][0]
+            theta4_n = theta44[num_t, 0]
             store_x[:, tr] = xd_n
             store_y[:, tr] = yd_n
             iterate = iterate + 1
@@ -547,7 +549,7 @@ def initialization_2(velocity, long_acc, omega, ind, distance, itr2, vd_n, wd_n,
     if m_tang3 != 0.0:
         m_perp3 = -1 / m_tang3
     else:
-        m_perp3 = 1.27e+20
+        m_perp3 = - math.inf
     if xq[index + 1] - xq[index] < 0:
         theta3 = math.pi + math.atan(m_tang3)
     else:
@@ -629,16 +631,16 @@ def cost(xd1, yd1, x_centre, y_centre, phase_chosen):
     global total_cost
 
     if max(menger_curv(xd1, yd1)) <= 0.15:
-        if phase_chosen == 2:
-            cost1 = 0
-            cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
-            total_cost = 2 * cost1 + 0.5 * cost2
-            print(total_cost)
-        else:
-            cost1 = max(min(np.sqrt(np.add(np.square(xd1 - dyn1_x), np.square(yd1 - dyn1_y)))) - 2, 0.01)
-            cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
-            total_cost = 2 * cost1 + 0.5 * cost2
-            print(total_cost)
+        # if phase_chosen == 2:
+        #     cost1 = 0
+        #     cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
+        #     total_cost = 2 * cost1 + 0.5 * cost2
+        #     print(total_cost)
+        # else:
+        cost1 = 1 / (max(min(np.sqrt(np.add(np.square(xd1 - dyn1_x), np.square(yd1 - dyn1_y)))) - 2, 0.01))
+        cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
+        total_cost = 2 * cost1 + 0.5 * cost2
+        print(total_cost)
 
     else:
         total_cost = math.inf
@@ -731,12 +733,12 @@ while index < loop_counter:
         if m_tang != 0.0:
             m_perp = -1 / m_tang
         else:
-            m_perp = 1.27e+20
+            m_perp = -math.inf
         m_tang_np = (yq[index + 2] - yq[index + 1]) / (xq[index + 2] - xq[index + 1])
         if m_tang_np != 0:
             m_perp_np = -1 / m_tang_np
         else:
-            m_perp_np = 1.27e+20
+            m_perp_np = -math.inf
 
         xNormalLine = np.add(np.dot((1 / m_perp), (yq - yq[index + 1])), xq[index + 1])
 
@@ -843,7 +845,8 @@ while index < loop_counter:
 
             for q in range(0, num_foc_t + 1):
                 if index < var:  # checking for forward distance & itr1 flag is phase=2 detection(0 means phase~=2 and >0 means phase=2)
-                    if math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2) < 11:
+                    print(math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2))
+                    if math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2) < 10.99999999999990:
                         if lane_status == 0:
                             phase = 1
                             state = 2
@@ -934,47 +937,47 @@ while index < loop_counter:
         # plt.show()
 
         for b in range(0, trajectory):
-            plt.plot(x_store[:, b], y_store[:, b], linestyle='-', linewidth=1)
-            # plt.plot(xNormalLine, yq)
+            plt.plot(x_store, y_store, linestyle='-', linewidth=1, color='green')
+            # plt.plot(xNormalLine, yq, color='blue')
             # plt.show()
 
         if state == 2 and itr2 > 1:
             plt.plot(xNormalLine1, yq)
             if phase == 1:
-                plt.plot(x_store[:, k], y_store[:, k], linestyle='-', linewidth=2)
+                plt.plot(x_store, y_store, linestyle='-', linewidth=2)
                 for r in range(0, num_foc_t + 1):
-                    plt.plot(x_store[r, k], y_store[r, k], markersize=6)
+                    plt.plot(x_store, y_store, markersize=6)
                     plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
                     plt.title('Start overtaking')
                     # plt.show()
-                    # plt.pause(0.0000001)
+                    # plt.pause(0.01)
 
             elif phase == 2:
                 if itr == 1:
-                    plt.plot(x_store[:, k], y_store[:, k], linestyle='-', linewidth=2)
+                    plt.plot(x_store, y_store, linestyle='-', linewidth=2, color='black')
                     for r in range(0, num_foc_t + 1):
-                        plt.plot(x_store[r, k], y_store[r, k], markersize=6)
+                        plt.plot(x_store, y_store, markersize=6)
                         plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
                         plt.title('Detected state = ' + str(state))
                         # plt.show()
-                        plt.pause(0.0000001)
+                        # plt.pause(0.01)
                 elif itr1 > 1:
-                    plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth=2, c='blue')
+                    plt.plot(x_store, y_store, linestyle='-', linewidth=2, c='blue')
                     for r in range(0, num_foc_t + 1):
-                        plt.plot(x_store[r, 0], y_store[r, 0], markersize=6)
+                        plt.plot(x_store, y_store, markersize=6)
                         plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
                         plt.title('Back to reference line')
                         # plt.show()
-                        plt.pause(0.0000001)
+                        # plt.pause(0.01)
 
         else:
-            plt.plot(x_store[:, 0], y_store[:, 0], linestyle='-', linewidth='2')
+            plt.plot(x_store, y_store, linestyle='-', linewidth='2')
             for r in range(0, num_foc_t + 1):
-                plt.plot(x_store[r, 0], y_store[r, 0], markersize=6)
+                plt.plot(x_store, y_store, markersize=6)
                 plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
                 plt.title('Detected state = ' + str(state))
                 # plt.show()
-                plt.pause(0.0000001)
+                # plt.pause(0.01)
 
         if state == 2 and itr2 > 1:
             if phase == 1:
@@ -1018,6 +1021,7 @@ while index < loop_counter:
                 index = index + 1
                 itr1 = 0
             itr2 = 0
+            break
 
         if i >= horizon:
             state = 5
