@@ -304,12 +304,12 @@ def overtake_1(a_store, b_store, store_x, store_y, T_initial, kk, tang_m, perpen
                                   b_store[:, tr])
                 td_n = td_n + (T_fin - T_initial) / num_t
 
-            curv = menger_curv(xd_n, yd_n)
+            curv = curvature_fn(xd_n, yd_n)
             A = np.array([0, 1, 2 * T_fin, 3 * T_fin ** 2, 4 * T_fin ** 3, 5 * T_fin ** 4])
             B = np.dot(A, a_store[:, tr])
             C = np.dot(A, b_store[:, tr])
             vd_n = max(min(math.sqrt(B * B + C * C), V_max), 0)
-            wd_n = vd_n * curv[num_t][0]
+            wd_n = vd_n * curv[num_t]
             D = np.array([0, 0, 2, 6 * T_fin, 12 * (T_fin ** 2), 20 * (T_fin ** 3)], ndmin=2)
             E = np.dot(D, a_store[:, tr])
             F = np.dot(D, b_store[:, tr])
@@ -317,11 +317,11 @@ def overtake_1(a_store, b_store, store_x, store_y, T_initial, kk, tang_m, perpen
 
             for mm in range(0, num_t):
                 if xq[index_number + 1] - xq[index_number] < 0:
-                    theta44[mm, 0] = math.pi + math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
+                    theta44[mm] = math.pi + math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
                 else:
-                    theta44[mm, 0] = math.atan((yd_n[mm + 1] - yd_n[mm]) / xd_n[mm + 1] - xd_n[mm])
+                    theta44[mm] = math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
 
-            theta4_n = theta44[num_t, 0]
+            theta4_n = theta44[num_t - 1]
             store_x[:, tr] = xd_n
             store_y[:, tr] = yd_n
             iterate = iterate + 1
@@ -374,12 +374,12 @@ def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendi
                 yd_n[ii] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], b_store[:, tr])
                 td_n = td_n + (T_fin - T_initial) / num_t
 
-            curv = menger_curv(xd_n, yd_n)
+            curv = curvature_fn(xd_n, yd_n)
             A = np.array([0, 1, 2 * T_fin, 3 * T_fin ** 2, 4 * T_fin ** 3, 5 * T_fin ** 4])
             B = np.dot(A, a_store[:, tr])
             C = np.dot(A, b_store[:, tr])
             vd_n = max(min(math.sqrt(B * B + C * C), V_max), 0)
-            wd_n = vd_n * curv[num_t][0]
+            wd_n = vd_n * curv[num_t]
             D = np.array([0, 0, 2, 6 * T_fin, 12 * (T_fin ** 2), 20 * (T_fin ** 3)], ndmin=2)
             E = np.dot(D, a_store[:, tr])
             F = np.dot(D, b_store[:, tr])
@@ -387,11 +387,11 @@ def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendi
 
             for mm in range(0, num_t):
                 if xq[index_no + 1] - xq[index_no] < 0:
-                    theta44[mm, 0] = math.pi + math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
+                    theta44[mm] = math.pi + math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
                 else:
-                    theta44[mm, 0] = math.atan((yd_n[mm + 1] - yd_n[mm]) / xd_n[mm + 1] - xd_n[mm])
+                    theta44[mm] = math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
 
-            theta4_n = theta44[num_t, 0]
+            theta4_n = theta44[num_t - 1]
             store_x[:, tr] = xd_n
             store_y[:, tr] = yd_n
             iterate = iterate + 1
@@ -454,7 +454,7 @@ def initialization3_1(x_init, y_init, velocity, vel_n, omega_n, acc_n, index_no)
         yf1 = np.array([yq[index_no], yq[index_no + 1], yq[index_no + 2]])
         distance = math.sqrt(((x_init - xq[index_no + 1]) ** 2) + (y_init - yq[index_no + 1]) ** 2)
 
-        meng = menger_curv(xf1, yf1)
+        meng = curvature_fn(xf1, yf1)
         if j > 0:
             mtang4 = (yq[index_no + 1] - yq[index_no]) / (xq[index_no + 1] - xq[index_no])
         elif j == 0:
@@ -468,9 +468,9 @@ def initialization3_1(x_init, y_init, velocity, vel_n, omega_n, acc_n, index_no)
         V_f = min(velocity[:])
 
         if j > 0:
-            W_f = V_f * meng[0, 0]
+            W_f = V_f * meng[0]
         elif j == 0:
-            W_f = V_f * meng[1, 0]
+            W_f = V_f * meng[1]
 
         A_f = 0
         T_f = distance / vel_n
@@ -500,8 +500,8 @@ def initialization3_1(x_init, y_init, velocity, vel_n, omega_n, acc_n, index_no)
         coeff_a = np.dot(P_inverse, g_matrix1)
         b_coeff = np.dot(P_inverse, g_matrix2)
 
-        xd = np.zeros((num_t + 1, 1))
-        yd = np.zeros((num_t + 1, 1))
+        xd = np.zeros(num_t + 1)
+        yd = np.zeros(num_t + 1)
         time_diff = T_i
 
         for ff in range(0, num_t + 1):
@@ -511,7 +511,7 @@ def initialization3_1(x_init, y_init, velocity, vel_n, omega_n, acc_n, index_no)
                             b_coeff)
             time_diff = time_diff + (T_f - T_i) / num_t
 
-        curvature = menger_curv(xd, yd)
+        curvature = curvature_fn(xd, yd)
 
         if max(curvature[:] <= 0.15):
             x_set[0] = xq[index_no + 1]
@@ -558,13 +558,13 @@ def initialization_2(velocity, long_acc, omega, ind, distance, itr2, vd_n, wd_n,
     itr2 = itr2 + 1
 
     if xq[cc] < dyn1_x and yq[cc] == dyn1_y:
-        xf = np.array([[xq[cc], dyn1_x, xq[cc + 1]]]).T
-        yf = np.array([[yq[cc], dyn1_y, yq[cc + 1]]]).T
+        xf = np.array([xq[cc], dyn1_x, xq[cc + 1]])
+        yf = np.array([yq[cc], dyn1_y, yq[cc + 1]])
         x_f = xq[cc + 1]
         y_f = yq[cc + 1]
     elif xq[cc] > dyn1_x and yq[cc] == dyn1_y:
-        xf = np.array([[xq[cc - 1], dyn1_x, xq[cc]]]).T
-        yf = np.array([[yq[cc - 1], dyn1_y, yq[cc]]]).T
+        xf = np.array([xq[cc - 1], dyn1_x, xq[cc]])
+        yf = np.array([yq[cc - 1], dyn1_y, yq[cc]])
         x_f = xq[cc]
         y_f = yq[cc]
     elif xq[cc] == dyn1_x and yq[cc] == dyn1_y:
@@ -584,9 +584,9 @@ def initialization_2(velocity, long_acc, omega, ind, distance, itr2, vd_n, wd_n,
         V_i = velocity[ind]
 
     V_f = V_max
-    meng = menger_curv(xf, yf)
+    meng = curvature_fn(xf, yf)
     W_i = omega[ind]
-    W_f = V_f * meng[1, 0]
+    W_f = V_f * meng[1]
     A_i = long_acc[ind]
     A_f = 0
     t_i = 0.0
@@ -629,8 +629,9 @@ def initialization_2(velocity, long_acc, omega, ind, distance, itr2, vd_n, wd_n,
 
 def cost(xd1, yd1, x_centre, y_centre, phase_chosen):
     global total_cost
-
-    if max(menger_curv(xd1, yd1)) <= 0.15:
+    menger_curvature = np.zeros(11)
+    menger_curvature[:] = curvature_fn(xd, yd)
+    if max(menger_curvature[:]) <= 0.15:
         # if phase_chosen == 2:
         #     cost1 = 0
         #     cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
@@ -640,7 +641,6 @@ def cost(xd1, yd1, x_centre, y_centre, phase_chosen):
         cost1 = 1 / (max(min(np.sqrt(np.add(np.square(xd1 - dyn1_x), np.square(yd1 - dyn1_y)))) - 2, 0.01))
         cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
         total_cost = 2 * cost1 + 0.5 * cost2
-        print(total_cost)
 
     else:
         total_cost = math.inf
@@ -679,9 +679,9 @@ y_store_n = np.zeros((11, 5))
 x_set = np.zeros((5, 1))
 y_set = np.zeros((5, 1))
 T_f = np.zeros((5, 1))
-cost_store = np.zeros((5, 1))
+cost_store = np.zeros(5)
 T_fin = 0
-theta44 = np.zeros((11, 1))
+theta44 = np.zeros(10)
 g1 = np.zeros((6, 1))
 g2 = np.zeros((6, 1))
 
@@ -713,6 +713,7 @@ theta4_n = 0
 theta4 = 0
 count1 = 0
 count2 = 0
+number_for_inf_check = 0
 loop_counter = len(xq)
 
 while index < loop_counter:
@@ -761,7 +762,7 @@ while index < loop_counter:
              m_perp3, itr4, jj] = initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, theta,
                                                    theta4, itr4, jj)
 
-            xNormalLine1 = np.dot((1 / m_perp3), np.add((yq - dyn1_y), dyn1_x))
+            xNormalLine1 = np.add(np.dot((1/m_perp3), (yq - dyn1_y)), dyn1_x)
 
         for h in range(0, trajectory):
             xt_f = x_set[h]
@@ -845,7 +846,6 @@ while index < loop_counter:
 
             for q in range(0, num_foc_t + 1):
                 if index < var:  # checking for forward distance & itr1 flag is phase=2 detection(0 means phase~=2 and >0 means phase=2)
-                    print(math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2))
                     if math.sqrt((xd[q] - dyn1_x) ** 2 + (yd[q] - dyn1_y) ** 2) < 10.99999999999990:
                         if lane_status == 0:
                             phase = 1
@@ -894,7 +894,12 @@ while index < loop_counter:
                 cost_store[h] = total_cost
 
         if itr2 > 1 and phase == 1:
-            if cost_store[:].any == math.inf:
+            number_for_inf_check = 0
+            for i in range(0, len(cost_store)):
+                if cost_store[i] == math.inf:
+                    number_for_inf_check = number_for_inf_check + 1
+
+            if number_for_inf_check == 5:
                 itr4 = 1
                 break
             else:
@@ -937,16 +942,16 @@ while index < loop_counter:
         # plt.show()
 
         for b in range(0, trajectory):
-            plt.plot(x_store, y_store, linestyle='-', linewidth=1, color='green')
-            # plt.plot(xNormalLine, yq, color='blue')
+            plt.plot(x_store[:, b], y_store[:, b], linestyle='-', linewidth=1, color='green')
+            plt.plot(xNormalLine, yq, color='blue')
             # plt.show()
 
         if state == 2 and itr2 > 1:
             plt.plot(xNormalLine1, yq)
             if phase == 1:
-                plt.plot(x_store, y_store, linestyle='-', linewidth=2)
+                plt.plot(x_store[:, k], y_store[:, k], linestyle='-', linewidth=2)
                 for r in range(0, num_foc_t + 1):
-                    plt.plot(x_store, y_store, markersize=6)
+                    plt.plot(x_store[r, k], y_store[r, k], markersize=6)
                     plt.plot(dyn1_x, dyn1_y, 'bs', markerSize=3, markerFaceColor='black')
                     plt.title('Start overtaking')
                     # plt.show()
@@ -1034,3 +1039,5 @@ while index < loop_counter:
         else:
             V_init = V_f
             A_init = A_f
+
+        plt.pause(0.01)
