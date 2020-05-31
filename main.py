@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 def environment_load():  # This function is used for making lanes
@@ -1005,7 +1006,7 @@ while index < loop_counter:
                             itr1 = itr1 + 1
 
             elif phase == 2:
-                if x_store[num_foc_t].any == xq[index + 1] and y_store[num_foc_t].any == yq[index + 1]:
+                if x_store[num_foc_t, 0] == xq[index + 1] and y_store[num_foc_t, 0] == 1.9999999999999991:
                     phase = 0
                     state = 0
                     itr = itr + 1
@@ -1028,7 +1029,7 @@ while index < loop_counter:
             itr2 = 0
             break
 
-        if i >= horizon:
+        if i >= horizon - 1:
             state = 5
 
         index = index + 1
@@ -1040,4 +1041,11 @@ while index < loop_counter:
             V_init = V_f
             A_init = A_f
 
+        if index >= 298:
+            print("Task acheived")
+            plt.savefig()
+            break
+
         plt.pause(0.01)
+        
+plt.show()
