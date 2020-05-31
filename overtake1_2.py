@@ -12,6 +12,7 @@ theta4_n = []
 ad_n = []
 vd_n = []
 wd_n = []
+theta44 = []
 
 
 def curvature_fn(x, y):
@@ -27,68 +28,71 @@ def curvature_fn(x, y):
     return k
 
 
-def overtake_1_2(a_store, b_store, x_store, y_store, T_i, m_tang, m_perp, index):
+def overtake_1_2(a_store, b_store, store_x, store_y, T_initial, tang_m, perpendicular_m, index_no):
     global T_fin, theta4_n, ad_n, vd_n, wd_n
     trajectory = 1
-    num_foc_t = 10
-    td_n = T_i
+    num_t = 10
+    td_n = T_initial
 
     for tr in range(0, trajectory):
         iterate = 0
         while iterate == 0:
-            if m_tang == 0:
-                p = [[a_store[5, tr]]
-                     [a_store[4, tr]]
-                     [a_store[3, tr]]
-                     [a_store[2, tr]]
-                     [a_store[1, tr]]
-                     [a_store[0, tr] - xq[index + 1]]]
-                time = np.roots(p)
-                for j in range(0, len(time)):
-                    if ~any(np.imag(time[j])) == 1:
-                        if time[j] > 0:
-                            T_fin = time[j]
+            if tang_m == 0:
+                p = np.array([a_store[5, tr],
+                              a_store[4, tr],
+                              a_store[3, tr],
+                              a_store[2, tr],
+                              a_store[1, tr],
+                              a_store[0, tr] - xq[index_no + 1]])
+
+                times = np.roots(p)
+                for mm in range(0, len(times)):
+                    if times[mm].imag == 0:
+                        if times[mm] > 0:
+                            T_fin = times[mm].real
 
             else:
-                p = [[b_store[5, tr] - m_perp * a_store[6, tr]],
-                     [b_store[4, tr] - m_perp * a_store(5, tr)]
-                     [b_store[3, tr] - m_perp * a_store(4, tr)]
-                     [b_store[2, tr] - m_perp * a_store(3, tr)]
-                     [b_store[1, tr] - m_perp * a_store(2, tr)]
-                     [b_store[0, tr] - m_perp * a_store(1, tr) + m_perp * xq[index + 1] - yq[index + 1]]]
-                time = np.roots(p)
-                for j in range(0, len(time)):
-                    if ~any(np.imag(time[j])) == 1:
-                        if time[j] > 0:
-                            T_fin = time[j]
+                p = np.array([b_store[5, tr] - perpendicular_m * a_store[5, tr],
+                              b_store[4, tr] - perpendicular_m * a_store[4, tr],
+                              b_store[3, tr] - perpendicular_m * a_store[3, tr],
+                              b_store[2, tr] - perpendicular_m * a_store[2, tr],
+                              b_store[1, tr] - perpendicular_m * a_store[1, tr],
+                              b_store[0, tr] - perpendicular_m * a_store[0, tr] + perpendicular_m * xq[index_no + 1] -
+                              yq[
+                                  index_no + 1]])
 
-            for ii in range(0, num_foc_t):
-                xd_n[ii][0] = [1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5] * a_store[:, tr]
-                yd_n[ii][0] = [1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5] * b_store[:, tr]
+                times = np.roots(p)
+                for mm in range(0, len(times)):
+                    if times[mm].imag == 0:
+                        if times[mm] > 0:
+                            T_fin = times[mm].real
 
-                td_n = td_n + (T_fin - T_i) / num_foc_t
+            for ii in range(0, num_t + 1):
+                xd_n[ii] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], a_store[:, tr])
+                yd_n[ii] = np.dot([1, td_n, td_n ** 2, td_n ** 3, td_n ** 4, td_n ** 5], b_store[:, tr])
+                td_n = td_n + (T_fin - T_initial) / num_t
 
             curv = curvature_fn(xd_n, yd_n)
             A = np.array([0, 1, 2 * T_fin, 3 * T_fin ** 2, 4 * T_fin ** 3, 5 * T_fin ** 4])
-            B = np.dot(A, a_store)
-            C = np.dot(A, b_store)
+            B = np.dot(A, a_store[:, tr])
+            C = np.dot(A, b_store[:, tr])
             vd_n = max(min(math.sqrt(B * B + C * C), V_max), 0)
-            wd_n = vd_n * curv[num_foc_t + 1][0]
-            D = np.array([0, 0, 2, 6 * T_fin, 12 * T_fin ^ 2, 20 * T_fin ^ 3])
-            E = np.dot(D, a_store)
-            F = np.dot(E, b_store)
+            wd_n = vd_n * curv[num_t]
+            D = np.array([0, 0, 2, 6 * T_fin, 12 * (T_fin ** 2), 20 * (T_fin ** 3)], ndmin=2)
+            E = np.dot(D, a_store[:, tr])
+            F = np.dot(D, b_store[:, tr])
             ad_n = min(math.sqrt(F * F + E * E), 1.2)
 
-            for jj in range(0, num_foc_t):
-                if xq[index + 1] - xq[index] < 0:
-                    theta4[jj, 0] = math.pi + math.atan((yd_n[jj + 1] - yd_n[jj]) / xd_n[jj + 1] - xd_n[jj])
+            for mm in range(0, num_t):
+                if xq[index_no + 1] - xq[index_no] < 0:
+                    theta44[mm] = math.pi + math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
                 else:
-                    theta4[jj, 0] = math.atan((yd_n[jj + 1] - yd_n[jj]) / xd_n[jj + 1] - xd_n[jj])
+                    theta44[mm] = math.atan((yd_n[mm + 1] - yd_n[mm]) / (xd_n[mm + 1] - xd_n[mm]))
 
-            theta4_n = theta4[num_foc_t, 0]
-
-            x_store[:, tr] = xd_n
-            y_store[:, tr] = yd_n
+            theta4_n = theta44[num_t - 1]
+            store_x[:, tr] = xd_n
+            store_y[:, tr] = yd_n
             iterate = iterate + 1
+    print("Coming back to main lane")
 
-    return x_store, y_store, vd_n, ad_n, wd_n, theta4_n, T_fin
+    return store_x, store_y, vd_n, ad_n, wd_n, theta4_n, T_fin

@@ -2,13 +2,16 @@ import numpy as np
 
 
 def curvature_fn(x, y):
-    k_matrix = np.zeros(len(x), 1)
     dx = np.gradient(x)
     ddx = np.gradient(dx)
     dy = np.gradient(y)
     ddy = np.gradient(dy)
-
-    for j in range(0, len(x)):
-        k_matrix[j, 0] = (dx[j, 0] * ddy[j, 0] - dy[j, 0] * ddx[j, 0]) / (dx[j, 0] * dx[j, 0] + dy[j, 0] * dy[j, 0])
-
+    A = np.multiply(dx, ddy)
+    B = np.multiply(dy, ddx)
+    C = np.subtract(A, B)
+    D = np.multiply(dx, dx)
+    E = np.multiply(dy, dy)
+    F = np.add(D, E)
+    G = np.power(F, 1.5)
+    k_matrix = np.divide(C, G)
     return k_matrix

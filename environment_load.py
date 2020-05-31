@@ -1,10 +1,9 @@
 import math
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def environment_load():
+def environment_load():  # This function is used for making lanes
     rows = 11
     cols = 300
     str_cols = 50
@@ -83,17 +82,19 @@ def environment_load():
         lane[3, c_row - 1, we] = math.pi
         x = x - dx
 
-    for c in range(1, cols):
+    for c in range(0, cols):
         x = lane[0, c_row - 1, c]
         y = lane[1, c_row - 1, c]
         th = lane[2, c_row - 1, c]
         th_real = lane[3, c_row - 1, c]
 
-        for we in range(0, c_row-1):
+        for we in range(c_row - 1, -1, -1):
             lane[0, we, c] = x
             lane[1, we, c] = y
             lane[2, we, c] = th
             lane[3, we, c] = th_real
+            x = x - dx * math.sin(th_real)
+            y = y + dy * math.cos(th_real)
 
         x = lane[0, c_row - 1, c]
         y = lane[1, c_row - 1, c]
@@ -108,26 +109,7 @@ def environment_load():
             x = x + dx * math.sin(th_real)
             y = y - dy * math.cos(th_real)
 
-    plt.plot(lane[0, 0, :], lane[1, 0, :], linewidth=2, c='black')
-    # print(lane[0, c_row - 3, :])
-    # print(lane[0, c_row - 1, :])
-    # plt.axis([0, cols, -60, 30])
-    # print(lane)
+    plt.plot(lane[0, c_row - 1, :], lane[1, c_row - 1, :], 'o')
+    plt.axis([0, cols, -60, 30])
+    plt.show()
     return lane
-
-
-ogm = environment_load()
-xq = ogm[0, 3, :]
-yq = ogm[1, 3, :]
-print(len(xq))
-plt.plot(ogm[0, 0, :], ogm[1, 0, :], linewidth=2, c='black')
-# plt.plot(ogm[0, 4, :], ogm[1, 4, :], c='orange', linewidth=1)
-plt.plot(ogm[0, 6, :], ogm[1, 6, :], linestyle='--')
-plt.plot(ogm[0, 10, :], ogm[1, 10, :], linewidth=2, c='black')
-
-plt.xlabel('X(m)')
-plt.ylabel('Y(m)')
-plt.axis([0, 165, -35, 35])
-print(ogm[0, 10, :])
-print(ogm[0, 5, :])
-# plt.show()

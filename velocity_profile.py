@@ -29,8 +29,8 @@ def vel_prof(x, y, v0, a0, t0, current_state):
     global v_obs, V_max, critical_dis, follow_dis, dyn_x, dyn_y, dyn1_x, dyn1_y
     length_of_array_x = len(x)
 
-    vel_matrix = np.zeros(length_of_array_x, 1)
-    longitudinal_acceleration = np.zeros(length_of_array_x, 1)
+    vel_matrix = np.zeros((length_of_array_x, 1))
+    longitudinal_acceleration = np.zeros((length_of_array_x, 1))
     wt = np.zeros(length_of_array_x, 1)
     current_time = np.zeros(length_of_array_x, 1)
     c = curvature_fn(x, y)

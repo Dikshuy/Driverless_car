@@ -4,6 +4,7 @@ import math
 
 dyn1_x = []
 dyn1_y = []
+total_cost = 0
 
 
 def curvature_fn(x, y):
@@ -19,21 +20,22 @@ def curvature_fn(x, y):
     return k_matrix
 
 
-def cost(xd, yd, x_cen, y_cen, phase):
-    if max(curvature_fn(xd, yd)) <= 0.15:
-        if phase == 2:
-            cost1 = 0
-            cost2 = np.sum(math.sqrt(np.square(x_cen - xd) + np.square(y_cen - yd)))
-            total_cost = 2*cost1 + 0.5*cost2
-        else:
-            cost1 = 1 / max(min(math.sqrt(np.square(xd- dyn1_x) + np.square(yd - dyn1_y)))-2, 0.01)
-            cost2 = np.sum(math.sqrt(np.square(x_cen - xd) + np.square(y_cen - yd)))
-            total_cost = 2 * cost1 + 0.5 * cost2
+def cost(xd1, yd1, x_centre, y_centre):
+    global total_cost
+    menger_curvature = np.zeros(11)
+    menger_curvature[:] = curvature_fn(xd1, yd1)
+    if max(menger_curvature[:]) <= 0.15:
+        # if phase_chosen == 2:
+        #     cost1 = 0
+        #     cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
+        #     total_cost = 2 * cost1 + 0.5 * cost2
+        #     print(total_cost)
+        # else:
+        cost1 = 1 / (max(min(np.sqrt(np.add(np.square(xd1 - dyn1_x), np.square(yd1 - dyn1_y)))) - 2, 0.01))
+        cost2 = np.sum(np.sqrt(np.add(np.square(x_centre - xd1), np.square(y_centre - yd1))))
+        total_cost = 2 * cost1 + 0.5 * cost2
 
     else:
         total_cost = math.inf
 
     return total_cost
-
-
-

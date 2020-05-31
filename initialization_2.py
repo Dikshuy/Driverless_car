@@ -14,16 +14,19 @@ y_f = []
 
 
 def curvature_fn(x, y):
-    k = np.zeros(len(x), 1)
     dx = np.gradient(x)
     ddx = np.gradient(dx)
     dy = np.gradient(y)
     ddy = np.gradient(dy)
-
-    for j in range(0, len(x)):
-        k[j, 0] = (dx[j, 0] * ddy[j, 0] - dy[j, 0] * ddx[j, 0]) / (dx[j, 0] * dx[j, 0] + dy[j, 0] * dy[j, 0])
-
-    return k
+    A = np.multiply(dx, ddy)
+    B = np.multiply(dy, ddx)
+    C = np.subtract(A, B)
+    D = np.multiply(dx, dx)
+    E = np.multiply(dy, dy)
+    F = np.add(D, E)
+    G = np.power(F, 1.5)
+    k_matrix = np.divide(C, G)
+    return k_matrix
 
 
 def initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, theta, theta4, itr4, jj):
