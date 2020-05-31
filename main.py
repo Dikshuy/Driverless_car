@@ -132,7 +132,7 @@ def curvature_fn(x, y):
 
 
 def menger_curv(x, y):
-    k_matrix = np.zeros((len(x), 1))
+    k_matrix = np.zeros(len(x))
     for qq in range(1, len(x) - 1):
         area1 = x[qq - 1] * (y[qq] - y[qq + 1])
         area2 = x[qq] * (y[qq + 1] - y[qq - 1])
@@ -214,7 +214,7 @@ def vel_prof(x, y, v0, a0, t0, current_state):
                     2 * math.sqrt((x[o - 1] - x[o]) ** 2 + (y[o - 1] - y[o]) ** 2))
             longitudinal_acceleration[o] = min(temp1, acc_long)
 
-            wt[0] = np.dot(v0, c[o])
+            wt[0] = v0 * c[o]
             wt[o] = np.dot(vel_matrix[o], c[o])
 
             if vel_matrix[o] == vel_matrix[o - 1] and vel_matrix[o] == 0:
@@ -442,7 +442,7 @@ def initialization1(velocity, acceleration_in_x, omega, time, p, indexes, angle)
 
 
 def initialization3_1(x_init, y_init, velocity, vel_n, omega_n, acc_n, index_no):
-    global W_f, mtang4, trajectory, Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, V_f, A_f, P, T_f
+    global W_f, mtang4, trajectory, Vx_i, Vx_f, Vy_i, Vy_f, Ax_i, Ax_f, Ay_i, Ay_f, V_f, A_f, P, T_f, x_set, y_set
     num_t = 10
     trajectory = 1
     T_i = 0
@@ -481,13 +481,13 @@ def initialization3_1(x_init, y_init, velocity, vel_n, omega_n, acc_n, index_no)
                       [0, 1, 2 * T_f, 3 * (T_f ** 2), 4 * (T_f ** 3), 5 * (T_f ** 4)],
                       [0, 0, 2, 6 * T_f, 12 * (T_f ** 2), 20 * (T_f ** 3)]])
 
-        Vx_i = vel_n * math.cos(theta_4)
+        Vx_i = vel_n * math.cos(theta4)
         Vx_f = V_f * math.cos(theta_4)
-        Vy_i = vel_n * math.sin(theta_4)
+        Vy_i = vel_n * math.sin(theta4)
         Vy_f = V_f * math.sin(theta_4)
-        Ax_i = acc_n * math.cos(theta_4) - vel_n * math.sin(theta_4) * omega_n
+        Ax_i = acc_n * math.cos(theta4) - vel_n * math.sin(theta4) * omega_n
         Ax_f = A_f * math.cos(theta_4) - V_f * math.sin(theta_4) * W_f
-        Ay_i = acc_n * math.sin(theta_4) + vel_n * math.cos(theta_4) * omega_n
+        Ay_i = acc_n * math.sin(theta4) + vel_n * math.cos(theta4) * omega_n
         Ay_f = A_f * math.sin(theta_4) + V_f * math.cos(theta_4) * W_f
 
         xt_ff = xq[index_no + 1]
@@ -513,7 +513,7 @@ def initialization3_1(x_init, y_init, velocity, vel_n, omega_n, acc_n, index_no)
 
         curvature = curvature_fn(xd, yd)
 
-        if max(curvature[:] <= 0.15):
+        if np.amax(curvature) <= 0.15:
             x_set[0] = xq[index_no + 1]
             y_set[0] = yq[index_no + 1]
             iteration = iteration + 1
@@ -676,14 +676,14 @@ y_store = np.zeros((11, 5))
 time_store = np.zeros((11, 5))
 x_store_n = np.zeros((11, 5))
 y_store_n = np.zeros((11, 5))
-x_set = np.zeros((5, 1))
-y_set = np.zeros((5, 1))
-T_f = np.zeros((5, 1))
+x_set = np.zeros(5)
+y_set = np.zeros(5)
+T_f = np.zeros(5)
 cost_store = np.zeros(5)
 T_fin = 0
 theta44 = np.zeros(10)
-g1 = np.zeros((6, 1))
-g2 = np.zeros((6, 1))
+g1 = np.zeros(6)
+g2 = np.zeros(6)
 
 num_foc_t = 10
 v_obs = 1.5
@@ -762,7 +762,7 @@ while index < loop_counter:
              m_perp3, itr4, jj] = initialization_2(vel, a_long, w, i, dist, itr2, vd_n, wd_n, ad_n, index, theta,
                                                    theta4, itr4, jj)
 
-            xNormalLine1 = np.add(np.dot((1/m_perp3), (yq - dyn1_y)), dyn1_x)
+            xNormalLine1 = np.add(np.dot((1 / m_perp3), (yq - dyn1_y)), dyn1_x)
 
         for h in range(0, trajectory):
             xt_f = x_set[h]
@@ -895,8 +895,8 @@ while index < loop_counter:
 
         if itr2 > 1 and phase == 1:
             number_for_inf_check = 0
-            for i in range(0, len(cost_store)):
-                if cost_store[i] == math.inf:
+            for inf in range(0, len(cost_store)):
+                if cost_store[inf] == math.inf:
                     number_for_inf_check = number_for_inf_check + 1
 
             if number_for_inf_check == 5:
