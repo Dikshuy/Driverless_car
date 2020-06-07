@@ -1,0 +1,35 @@
+#VRML_SIM R2020a utf8
+WorldInfo {
+  basicTimeStep 16
+  contactProperties [
+    ContactProperties {
+      softCFM 1e-05
+    }
+  ]
+}
+Viewpoint {
+  orientation 0.9999750005208197 -0.0049999166686457795 -0.00499991666864578 4.71236398059302
+  position 0.0009543714033597917 117.32802528343075 0.5984295760660935
+  follow "agent_0"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+CircleArena {
+  radius 1500
+  wallThickness 1
+  wallHeight 2
+}
+TeslaModel3 {
+  translation 0 0.273006 0
+  rotation 0 1 0 1.5708
+  color 0.533333 0.541176 0.521569
+  name "agent_0"
+  controller "ros_automobile"
+  controllerArgs "--name=agent_0 --clock --use-sim-time"
+  sensorsSlotCenter [
+    GPS {
+    }
+  ]
+}
