@@ -16,9 +16,9 @@ class Vehicle_Info:
         self.update_count = 0
         self.wheel_base = 2.94    # for tesla use 2.94 and for bmw 2.995
         self.agent_str = agent_str
-        self.x_cur = 0.
-        self.y_cur = 0.
-        self.theta_cur = 0.
+        self.x_cur = -118.22
+        self.y_cur = 3.46
+        self.theta_cur = 1.57488
         self.x_last = 0.
         self.y_last = 0.
         self.theta_last = 0.
@@ -50,12 +50,12 @@ class Vehicle_Info:
         if not(abs(self.x_last_2 - self.x_last) <= self.epsilon and abs(self.y_last_2 - self.y_last) <= self.epsilon):
             self.theta_last = self.theta_cur
         if not(abs(self.x_last - self.x_cur) <= self.epsilon and abs(self.y_last - self.y_cur) <= self.epsilon):
-             self.theta_cur = math.atan2(self.y_cur - self.y_last, self.x_cur - self.x_last)
-        self.lin_vel = math.sqrt(((self.x_cur - self.x_last)/self.del_time) ** 2 + ((self.y_cur - self.y_last)/self.del_time) ** 2)              
+             self.theta_cur = math.atan2((self.y_cur - self.y_last), (self.x_cur - self.x_last))
+        self.lin_vel = math.sqrt((self.x_cur - self.x_last) ** 2 + (self.y_cur - self.y_last) ** 2)/self.del_time
         temp = self.menger_curve()
         # print temp
         self.ang_vel = self.lin_vel * temp
-    
+
     def menger_curve(self):
         area = (0.5 * (self.x_last_2 * (self.y_last - self.y_cur) + self.x_last * (self.y_cur - self.y_last_2) + self.x_cur * (self.y_last_2 - self.y_last)))
         s1 = math.sqrt((self.x_last - self.x_last_2) ** 2 + (self.y_last - self.y_last_2) ** 2)
@@ -73,7 +73,7 @@ class Vehicle_Info:
             return 4. * area /(s1 * s2 * s3)
 
 class Webots_Auto_Wrapper:
-    
+
     def __init__(self):
         step = 16                 # NOTE: step <= basic time step in the simulator
         self.controller_count = 0
@@ -106,8 +106,8 @@ class Webots_Auto_Wrapper:
                 gp[i] = rospy.ServiceProxy('{}/gps/enable'.format(self.controllers[i]), set_int)
                 gp[i](step)
                 self.lin_vel[i] = rospy.ServiceProxy('{}/automobile/set_cruising_speed'.format(self.controllers[i]), set_float)
-                self.ang_vel[i] = rospy.ServiceProxy('{}/automobile/set_steering_angle'.format(self.controllers[i]), set_float)    
-                rospy.Subscriber('{}/gps/values'.format(self.controllers[i]), NavSatFix, self.callback_gps_pos, i)  
+                self.ang_vel[i] = rospy.ServiceProxy('{}/automobile/set_steering_angle'.format(self.controllers[i]), set_float)
+                rospy.Subscriber('{}/gps/values'.format(self.controllers[i]), NavSatFix, self.callback_gps_pos, i)
                 self.odom_pub[i] = rospy.Publisher('{}/odom'.format(i), Odometry, queue_size = 10)
 
     def callback_vel(self, data, agent_str):
@@ -121,18 +121,18 @@ class Webots_Auto_Wrapper:
         self.controller_count += 1
         temp = data.data.split('_')
         self.controllers['{}_{}'.format(temp[0], temp[1])] = data.data
-        
+
     def callback_gps_pos(self, data, agent_str):
         secs = data.header.stamp.to_sec()
         if self.vehicles[agent_str].update_time(secs):
-            x = data.latitude
-            y = data.longitude
+            y = data.latitude
+            x = data.longitude
             self.vehicles[agent_str].update_state(x, y)
 
             msg_odom = Odometry()
             msg_odom.header.stamp = rospy.Time.now()
             msg_odom.header.seq = self.vehicles[agent_str].update_count
-            
+
             msg_odom.pose.pose.position.x = self.vehicles[agent_str].x_cur
             msg_odom.pose.pose.position.y = self.vehicles[agent_str].y_cur
             q = quaternion_about_axis(self.vehicles[agent_str].theta_cur, (0, 0, 1))
@@ -140,7 +140,7 @@ class Webots_Auto_Wrapper:
             msg_odom.pose.pose.orientation.y = q[1]
             msg_odom.pose.pose.orientation.z = q[2]
             msg_odom.pose.pose.orientation.w = q[3]
-            
+
             msg_odom.twist.twist.linear.x = self.vehicles[agent_str].lin_vel
             msg_odom.twist.twist.angular.z = self.vehicles[agent_str].ang_vel
 
@@ -152,4 +152,3 @@ if __name__ == "__main__":
     w = Webots_Auto_Wrapper()
     while not rospy.is_shutdown():
         pass
-

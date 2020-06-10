@@ -480,6 +480,7 @@ def curve(x,y):
         kk[i] = (dx[i]*ddy[i] - dy[i]*ddy[i])/pow((pow(dx[i], 2) + pow(dy[i], 2)),1.5)
     # print (kk)
     return kk
+  
 #********************************************** GPS Callback Function ****************************************************************************************************
 def datagps(data):
     global yaw, xact , yact, vact, wact
@@ -496,7 +497,7 @@ def datagps(data):
 #*************************************************************************************************************************************************************************
 
 if __name__ == "__main__":
-    global L, yaw, xact , yact, vact, wact
+    global L, yaw, xact , yact, vact, wact, xe, ye, theta_e
     yaw, xact, yact, vact, wact = 0.0, 0.0, 0.0, 0.0, 0.0
     x_set_init, y_set_init = 0, 0
     v_init, t_init, A_init = 0, 0, 1
@@ -695,7 +696,7 @@ if __name__ == "__main__":
                     t_i = float(ti)
                     t_f = float(ti)+float(T_add)
                     # print (t_f, t_i, "aaya")
-                    print (t_i, t_f, "state 2")
+                    #print (t_i, t_f, "state 2")
                 elif(phase == 2):
                     if(itr1 == 1):
                         # print (a_coff_store[:,k])
@@ -709,7 +710,7 @@ if __name__ == "__main__":
                         t_i = float(ti)
                         t_f = float(ti)+float(T_add)
                         # print (t_f, t_i, "aaya idhar")
-                        print (t_i, t_f, "state 2")
+                       # print (t_i, t_f, "state 2")
                     elif(itr1 >1):
                         # print (a_coff_store[:,0])
                         # print (t[i],t[i+1],T_add, "phase2-2nd")
@@ -722,7 +723,7 @@ if __name__ == "__main__":
                         t_i = float(ti)
                         t_f = float(ti)+float(T_add)
                         # print (t_f, t_i, "aaya kidhar")
-                        print (t_i, t_f, "state 2")
+                        #print (t_i, t_f, "state 2")
                 
             else:
                 # print (float(rospy.get_time()), float(t[i]), float(t[i+1]))
@@ -739,7 +740,7 @@ if __name__ == "__main__":
                     t_i = float(t[i])
                     t_f = float(t[i])+float(t_store[s,0])
                     # print (t_f, t_i, "gaensh")
-                    print (t_i, t_f, float(t_store[s,0]), "detected Region")
+                    #print (t_i, t_f, float(t_store[s,0]), "detected Region")
                 elif(itr2 == 0):
                     # print (a_coff_store[:,0])
                     # print (t[i], t[i+1], "St. Line")
@@ -753,7 +754,7 @@ if __name__ == "__main__":
                     t_i = float(t[i])
                     t_f = float(t[i+1])
                     # print (t_f, t_i, "ganpati bappa")
-                    print (t_i, t_f, "state 0")
+                    #print (t_i, t_f, "state 0")
             # print (a_coff_real)          
             tdd = 0
             # print (t_i, tdd, t_f, "morya")            
@@ -771,7 +772,7 @@ if __name__ == "__main__":
                 TDpp.append(tdd)
                 x_ref_new = xref
                 y_ref_new = yref
-                print (float(xref), float(yref))
+                #print (float(xref), float(yref))
                 theta_ref_new = math.atan((y_ref_new - y_ref_old)/(x_ref_new - x_ref_old))
                 if theta_ref_new<0:
                     theta_ref_new += 2*math.pi
@@ -785,8 +786,8 @@ if __name__ == "__main__":
                 
                 xe = float(math.cos(theta_act)*(x_ref_new - xact) + math.sin(theta_act)*(y_ref_new - yact))   # x_act and y_act will come from wrapper code
                 ye = float(-(math.sin(theta_act)*(x_ref_new - xact)) + math.cos(theta_act)*(y_ref_new - yact))
-                theta_e = float(theta_ref_new - theta_act)  
-                
+                theta_e = float(theta_ref_new - theta_act) 
+		              
                 if theta_e < -math.pi:
                     theta_e+=2*math.pi
                 elif theta_e > math.pi:
@@ -897,4 +898,9 @@ if __name__ == "__main__":
             else:
                 v_init = V_f
                 A_init = A_f
+	    #plt.plot(xe, rospy.get_time())
+	    #plt.xlabel('error in x')
+            #plt.ylabel('time(in sec)')
+	    #plt.axis([0, 30, -6, 6])
+	    #plt.pause(0.000000000000000000000000001)         
             # rospy.sleep(1)
