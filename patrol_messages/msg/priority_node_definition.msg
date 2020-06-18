@@ -1,0 +1,3 @@
+string node_id
+float32 revisit_time_from
+float32 revisit_time_to

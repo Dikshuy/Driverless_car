@@ -1,0 +1,6 @@
+string[] robot_id_list # Current list of active auto-patrol robots
+string robot_id #robot which have been removed or added. Current implementation assume only one robot per update will be considered.
+string start_node_id
+bool rem_check
+---
+string res #response

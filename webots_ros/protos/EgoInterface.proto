@@ -1,0 +1,36 @@
+#VRML_SIM R2020a utf8
+# license: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
+# license url: https://cyberbotics.com/webots_assets_license
+# tags: static
+# documentation url: https://www.cyberbotics.com/doc/automobile/sumo-interface
+# Supervisor interfacing SUMO with Webots
+
+PROTO EgoInterface [
+  field SFString  name                  "ego interface"
+  field SFBool    enableEgo             TRUE
+  field MFNode    children              []
+]
+{
+  %{
+    -- tracks check
+    local arguments = ""
+    if fields.enableEgo.value == true then
+      arguments = arguments .. "--no-enableEgo "
+    end
+  }%
+
+  Robot {
+    name IS name
+    model "Ego vehicle"
+    controller "ego_vehicle"
+    controllerArgs %{= '"' .. arguments ..'"' }%
+    supervisor TRUE
+    synchronization IS synchronization
+    children [
+      Group {
+        children IS children
+      }
+    ]
+  }
+
+}

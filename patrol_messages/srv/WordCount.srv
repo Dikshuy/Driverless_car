@@ -1,0 +1,7 @@
+string folder
+string graph
+int8 num_priority
+string priority_nodes
+string time_periods
+int8 num_robots
+

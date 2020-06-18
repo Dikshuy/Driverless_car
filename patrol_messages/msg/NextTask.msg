@@ -1,0 +1,1 @@
+string[] task #each string refer to a node id in a route. Message gets published on a specific topic for each robot.

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Thu May 14 19:26:38 2020 by SUMO duarouter Version 0.30.0
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="/home/dimple/Desktop/Modification/CAIR_webots/CAIR_mod_net/sumo.net.xml"/>
+        <trip-files value="/home/dimple/Desktop/Modification/CAIR_webots/CAIR_mod_net/sumo.trip.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/dimple/Desktop/Modification/CAIR_webots/CAIR_mod_net/sumo.rou.xml"/>
+    </output>
+
+    <processing>
+        <ignore-errors value="true"/>
+    </processing>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vehicle id="0" depart="0.00">
+        <route edges="-99829039_2 99829039_2 99829039_6 99829039_4 99829039_3 99829039_7 99829039_5 99829039_8 -99829041_1"/>
+    </vehicle>
+</routes>

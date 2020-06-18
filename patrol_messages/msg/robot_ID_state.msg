@@ -1,0 +1,13 @@
+string robot_id
+uint8 robot_state
+
+uint8 IDLE = 1
+uint8 IN_CHARGING_ZONE = 2
+uint8 MOVING_TOWARDS_CHARGING = 3
+uint8 AUTONOMOUS_PATROLLING = 4
+uint8 MANUAL_PATROLLING = 5
+uint8 INTRUSION_RESPONSE = 6
+uint8 TELEOPERATED = 7
+uint8 UNAVAILABLE = 8
+
+
