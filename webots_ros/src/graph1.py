@@ -26,16 +26,16 @@ def print_data():
     axis_font = {'fontname':'Arial', 'size':'20'}
 
     plt.clf()  
-    # plt.axis([-100, 100,0,400])   # axis limit
+    plt.axis([-100, 100,0,400])   # axis limit
     # plt.plot(0, 103, 'bo')        # point as obtsacle position
     x1, y1 = [7.5, 7.5], [0, 400]
     x2, y2 = [-2.5, -2.5], [0, 400]
     x3, y3 = [2.5,2.5], [ 0, 400 ]
-    # plt.plot(x1, y1, x2, y2, color = "black")
-    # plt.plot(x3, y3, color='green', linestyle='dashed')
+    plt.plot(x1, y1, x2, y2, color = "black")
+    plt.plot(x3, y3, color='green', linestyle='dashed')
     plt.plot(y_ref, x_ref, label = "ref path ", color = "red")             # I done some changes here swap x_ref with y_ref or vice versa
-    # plt.plot(y_act, x_act, label = "actual path", color = "green")
-    # plt.title("Curvature = 0.025, Detection Distance = 30m , Vel =  5 m/s, ", **title_font)
+    plt.plot(y_act, x_act, label = "actual path", color = "green")
+    plt.title("Curvature = 0.025, Detection Distance = 30m , Vel =  5 m/s, ", **title_font)
     plt.legend()
     plt.pause(0.02)     
 

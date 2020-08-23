@@ -19,7 +19,7 @@ yOffset = float(offset_value[1])
 xp, yp, zp = [], [], []
 edge_dict = defaultdict(dict)
 #Read values from a file corresponding to the edge
-with open ('/home/dikshant/catkin_ws/src/webots_ros/worlds/CAIR_mod_net/CAIR_mod_edge_info.in') as f1:
+with open ('/home/dikshant/catkin_ws/src/webots_ros/worlds/CAIR_mod_net/cair_edg.in') as f1:
     for line in f1:
         coord = line.split()
         if len(coord) == 1:
@@ -46,7 +46,7 @@ roll = 0.0
 pitch = 0.0
 
 for i in range(np.size(x_coord)):
-    pos = [round(-x_coord[i]  + xOffset , 2), height, y_coord[i] - yOffset]
+    pos = [-x_coord[i]  + xOffset , height, y_coord[i] - yOffset]
     zp.append(pos[2])
     xp.append(pos[0])
 
@@ -82,4 +82,3 @@ TeslaModel3 {
 }
 '''% (x1, y1, z1, ang_radians)
 print string_val
-

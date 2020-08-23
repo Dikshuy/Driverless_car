@@ -1307,8 +1307,8 @@ SimpleBuilding {
   wallType "concrete building"
 }
 TeslaModel3 {
-  translation 3.46 0.318652 -118.22
-  rotation  -0.00487135 0.999985 0.00235245 1.57488
+  translation 51.1070002403 0.4 -3.93272081705
+  rotation 0 1 0 1.49387756764
   name "agent_0"
   controller "ros_automobile"
   controllerArgs "--name=agent_0 --clock --use-sim-time"

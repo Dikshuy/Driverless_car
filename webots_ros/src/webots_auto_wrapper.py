@@ -16,9 +16,9 @@ class Vehicle_Info:
         self.update_count = 0
         self.wheel_base = 2.94    # for tesla use 2.94 and for bmw 2.995
         self.agent_str = agent_str
-        self.x_cur = -118.22
-        self.y_cur = 3.46
-        self.theta_cur = 1.57488
+        self.x_cur = -51.107000240310946
+        self.y_cur = 3.9327208170484313
+        self.theta_cur = 0.
         self.x_last = 0.
         self.y_last = 0.
         self.theta_last = 0.

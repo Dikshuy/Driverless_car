@@ -225,3 +225,75 @@ TeslaModel3 {
   ]
 }
 
+TeslaModel3 {
+  translation 1.4 0.4 -112.66
+  rotation 0 1 0 0.00999966668667
+  name "agent_0"
+  controller "ros_automobile"
+  controllerArgs "--name=agent_0 --clock --use-sim-time"
+  sensorsSlotCenter [
+    GPS {
+    }
+  ]
+}
+
+TeslaModel3 {
+  translation 51.11 0.4 -3.93
+  rotation 0 1 0 1.49343166737
+  name "agent_0"
+  controller "ros_automobile"
+  controllerArgs "--name=agent_0 --clock --use-sim-time"
+  sensorsSlotCenter [
+    GPS {
+    }
+  ]
+}
+
+TeslaModel3 {
+  translation 51.11 0.4 -3.93
+  rotation 0 1 0 1.49343166737
+  name "agent_0"
+  controller "ros_automobile"
+  controllerArgs "--name=agent_0 --clock --use-sim-time"
+  sensorsSlotCenter [
+    GPS {
+    }
+  ]
+}
+
+TeslaModel3 {
+  translation 51.11 0.4 -3.93
+  rotation 0 1 0 1.49343166737
+  name "agent_0"
+  controller "ros_automobile"
+  controllerArgs "--name=agent_0 --clock --use-sim-time"
+  sensorsSlotCenter [
+    GPS {
+    }
+  ]
+}
+
+TeslaModel3 {
+  translation 51.11 0.4 -3.93272081705
+  rotation 0 1 0 1.49380940769
+  name "agent_0"
+  controller "ros_automobile"
+  controllerArgs "--name=agent_0 --clock --use-sim-time"
+  sensorsSlotCenter [
+    GPS {
+    }
+  ]
+}
+
+TeslaModel3 {
+  translation 51.1070002403 0.4 -3.93272081705
+  rotation 0 1 0 1.49387756764
+  name "agent_0"
+  controller "ros_automobile"
+  controllerArgs "--name=agent_0 --clock --use-sim-time"
+  sensorsSlotCenter [
+    GPS {
+    }
+  ]
+}
+
